@@ -190,6 +190,7 @@
             <div class="col-md-4">
               <p><strong>Created by:</strong> <span th:text="${match.createdBy != null ? match.createdBy.username : 'N/A'}">coach1</span></p>
               <p><strong>Notes:</strong> <span th:text="${match.notes ?: 'No notes'}">Important match</span></p>
+              <p style="display: flex"><span id="statisticsData" th:text="${statisticsJson ?: '[]'}" ></span></p>
             </div>
           </div>
         </div>
@@ -344,42 +345,77 @@
     const courtWidth = court.offsetWidth;
     const courtHeight = court.offsetHeight;
 
-    // Try to get actual statistics, fall back to samples if needed
+
     let statistics = [];
-    if (document.querySelectorAll('.statistic-table tbody tr').length > 0) {
-      document.querySelectorAll('.statistic-table tbody tr').forEach(row => {
-        const cells = row.querySelectorAll('td');
-        if (cells.length >= 7) {
-          const actionType = cells[1].querySelector('.badge')?.textContent || '';
 
-          // In a real application, you would get these from data attributes
-          // stored in the HTML or via Ajax
-          const startX = Math.random(); // This is just for the demo
-          const startY = Math.random(); // This is just for the demo
-          let endX = null, endY = null;
+    // ✅ Get dynamic statistics data from embedded JSON
+    const jsonScriptTag = document.getElementById('statisticsData');
+    console.log(jsonScriptTag)
+    if (jsonScriptTag) {
+      try {
+        let rawData = JSON.parse(jsonScriptTag.textContent);
+        rawData.forEach(item => {
+          let stat = {
+            id: item.id,
+            actionType: item.actionType,
+            startX: normalize(item.startX),
+            startY: normalize(item.startY),
+            quality: 3 // default quality
+          };
 
-          if (actionType === 'ATTACK') {
-            endX = Math.random();
-            endY = Math.random();
+          if (item.endX !== null && item.endY !== null) {
+            stat.endX = normalize(item.endX);
+            stat.endY = normalize(item.endY);
           }
-
-          statistics.push({
-            id: cells[0].textContent,
-            actionType: actionType,
-            startX: startX,
-            startY: startY,
-            endX: endX,
-            endY: endY,
-            quality: parseInt(cells[4].querySelector('small')?.textContent) || 3
-          });
-        }
-      });
+          statistics.push(stat);
+        });
+      } catch (e) {
+        console.error('Failed to parse statistics JSON:', e);
+      }
     }
+
+    function normalize(value, max = 100) {
+      return +(value / max).toFixed(3);
+    }
+
+    console.log(statistics);
+
 
     // If we couldn't get real data, use the sample data
     if (statistics.length === 0) {
       statistics = sampleStatistics;
     }
+
+    // if (document.querySelectorAll('.statistic-table tbody tr').length > 0) {
+    //   document.querySelectorAll('.statistic-table tbody tr').forEach(row => {
+    //     const cells = row.querySelectorAll('td');
+    //     if (cells.length >= 7) {
+    //       const actionType = cells[1].querySelector('.badge')?.textContent || '';
+    //
+    //       // In a real application, you would get these from data attributes
+    //       // stored in the HTML or via Ajax
+    //       const startX = Math.random(); // This is just for the demo
+    //       const startY = Math.random(); // This is just for the demo
+    //       let endX = null, endY = null;
+    //
+    //       if (actionType === 'ATTACK') {
+    //         endX = Math.random();
+    //         endY = Math.random();
+    //       }
+    //
+    //       statistics.push({
+    //         id: cells[0].textContent,
+    //         actionType: actionType,
+    //         startX: startX,
+    //         startY: startY,
+    //         endX: endX,
+    //         endY: endY,
+    //         quality: parseInt(cells[4].querySelector('small')?.textContent) || 3
+    //       });
+    //     }
+    //   });
+    // }
+
 
     // Add markers and trajectories for each statistic
     statistics.forEach(stat => {

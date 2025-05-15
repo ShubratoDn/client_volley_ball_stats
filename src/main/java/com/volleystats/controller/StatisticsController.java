@@ -1,5 +1,9 @@
 package com.volleystats.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.volleystats.model.Match;
 import com.volleystats.model.Player;
 import com.volleystats.model.Statistic;
@@ -75,18 +79,43 @@ public class StatisticsController {
      * Show match statistics
      */
     @GetMapping("/match/{matchId}")
-    public String viewMatchStatistics(@PathVariable("matchId") Long matchId, Model model) {
+    public String viewMatchStatistics(@PathVariable("matchId") Long matchId, Model model) throws JsonProcessingException {
         User user = getCurrentUser();
 
         Match match = matchService.findById(matchId)
                 .orElseThrow(() -> new RuntimeException("Match not found"));
 
         List<Statistic> statistics = statisticService.findByMatchId(matchId);
+        List<Statistic> newStatistics = new ArrayList<>();
+        for (Statistic statistic : statistics) {
+
+            Statistic newStatistic = new Statistic();
+            newStatistic.setId(statistic.getId());
+            newStatistic.setActionType(statistic.getActionType());
+            newStatistic.setStartX(statistic.getStartX());
+            newStatistic.setStartY(statistic.getStartY());
+            newStatistic.setEndX(statistic.getEndX());
+            newStatistic.setEndY(statistic.getEndY());
+            newStatistic.setColor(statistic.getColor());
+            newStatistic.setNotes(statistic.getNotes());
+
+            newStatistics.add(newStatistic);
+        }
 
         model.addAttribute("match", match);
         model.addAttribute("statistics", statistics);
         model.addAttribute("user", user);
         model.addAttribute("roles", getUserAuthorities());
+
+        ObjectMapper mapper = new ObjectMapper();
+        // Register JavaTimeModule to handle Java 8 Date/Time types
+        mapper.registerModule(new JavaTimeModule());
+        // Optionally, disable writing dates as timestamps (e.g., 1626876870000)
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+
+        String statisticsJson = mapper.writeValueAsString(newStatistics);
+        model.addAttribute("statisticsJson", statisticsJson);
 
         // Count statistics by type
         long attackCount = statistics.stream().filter(s -> s.getActionType() == ActionType.ATTACK).count();
@@ -302,7 +331,7 @@ public class StatisticsController {
     @GetMapping("/match/{matchId}/filter")
     public String filterMatchStatistics(@PathVariable("matchId") Long matchId,
                                         @RequestParam("actionType") ActionType actionType,
-                                        Model model) {
+                                        Model model) throws JsonProcessingException {
         User user = getCurrentUser();
 
         Match match = matchService.findById(matchId)
@@ -310,11 +339,39 @@ public class StatisticsController {
 
         List<Statistic> statistics = statisticService.findByMatchIdAndActionType(matchId, actionType);
 
+        List<Statistic> newStatistics = new ArrayList<>();
+        for (Statistic statistic : statistics) {
+
+            Statistic newStatistic = new Statistic();
+            newStatistic.setId(statistic.getId());
+            newStatistic.setActionType(statistic.getActionType());
+            newStatistic.setStartX(statistic.getStartX());
+            newStatistic.setStartY(statistic.getStartY());
+            newStatistic.setEndX(statistic.getEndX());
+            newStatistic.setEndY(statistic.getEndY());
+            newStatistic.setColor(statistic.getColor());
+            newStatistic.setNotes(statistic.getNotes());
+
+            newStatistics.add(newStatistic);
+        }
+
+
         model.addAttribute("match", match);
         model.addAttribute("statistics", statistics);
         model.addAttribute("filteredActionType", actionType);
         model.addAttribute("user", user);
         model.addAttribute("roles", getUserAuthorities());
+
+        ObjectMapper mapper = new ObjectMapper();
+        // Register JavaTimeModule to handle Java 8 Date/Time types
+        mapper.registerModule(new JavaTimeModule());
+        // Optionally, disable writing dates as timestamps (e.g., 1626876870000)
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+
+        String statisticsJson = mapper.writeValueAsString(newStatistics);
+        model.addAttribute("statisticsJson", statisticsJson);
+
 
         return "statistics/view-match";
     }
