@@ -190,7 +190,7 @@
             <div class="col-md-4">
               <p><strong>Created by:</strong> <span th:text="${match.createdBy != null ? match.createdBy.username : 'N/A'}">coach1</span></p>
               <p><strong>Notes:</strong> <span th:text="${match.notes ?: 'No notes'}">Important match</span></p>
-              <p style="display: flex"><span id="statisticsData" th:text="${statisticsJson ?: '[]'}" ></span></p>
+              <p style="display: none"><span id="statisticsData" th:text="${statisticsJson ?: '[]'}" ></span></p>
             </div>
           </div>
         </div>
