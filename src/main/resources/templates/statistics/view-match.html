@@ -283,9 +283,9 @@
               <tr>
                 <th>ID</th>
                 <th>Action</th>
+                <th>State</th>
                 <th>Player</th>
                 <th>Team</th>
-                <th>Quality</th>
                 <th>Created</th>
                 <th>Actions</th>
               </tr>
@@ -298,14 +298,15 @@
                                                   th:classappend="'action-type-badge-' + ${stat.actionType.name()}"
                                                   th:text="${stat.actionType.name()}">ATTACK</span>
                 </td>
+<!--                <td>-->
+<!--                  <div class="quality-bar">-->
+<!--                    <div class="quality-value" th:style="'width:' + ${ (stat.quality != null ? stat.quality : 0) * 20} + '%'"></div>-->
+<!--                  </div>-->
+<!--                  <small th:text="${stat.quality != null ? stat.quality : 0 + '/5'}">3/5</small>-->
+<!--                </td>-->
+                <td th:text="${stat.actionState }"></td>
                 <td th:text="${stat.player.name }">John Doe</td>
                 <td th:text="${stat.team.name}">Team A</td>
-                <td>
-                  <div class="quality-bar">
-                    <div class="quality-value" th:style="'width:' + ${ (stat.quality != null ? stat.quality : 0) * 20} + '%'"></div>
-                  </div>
-                  <small th:text="${stat.quality != null ? stat.quality : 0 + '/5'}">3/5</small>
-                </td>
                 <td th:text="${#temporals.format(stat.createdAt, 'yyyy-MM-dd HH:mm')}">2025-05-13 14:30</td>
                 <td>
                   <a th:href="@{/statistics/{id}(id=${stat.id})}" class="btn btn-sm btn-info">
@@ -329,15 +330,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    // Sample data for visualization if no real data is available
-    const sampleStatistics = [
-      { id: 1, actionType: 'ATTACK', startX: 0.2, startY: 0.8, endX: 0.7, endY: 0.3, quality: 4 },
-      { id: 2, actionType: 'RECEPTION', startX: 0.7, startY: 0.3, quality: 3 },
-      { id: 3, actionType: 'SERVE', startX: 0.1, startY: 0.2, quality: 5 },
-      { id: 4, actionType: 'ATTACK', startX: 0.3, startY: 0.7, endX: 0.8, endY: 0.2, quality: 2 },
-      { id: 5, actionType: 'RECEPTION', startX: 0.6, startY: 0.6, quality: 4 }
-    ];
-
     // Get the court diagram
     const court = document.getElementById('courtDiagram');
     if (!court) return;
@@ -358,6 +350,7 @@
           let stat = {
             id: item.id,
             actionType: item.actionType,
+            actionState: item.actionState,
             startX: normalize(item.startX),
             startY: normalize(item.startY),
             quality: 3 // default quality
@@ -435,7 +428,9 @@
       // Position the marker
       startMarker.style.left = (stat.startX * courtWidth) + 'px';
       startMarker.style.top = (stat.startY * courtHeight) + 'px';
-      startMarker.setAttribute('title', 'ID: ' + stat.id + ' - ' + stat.actionType);
+      // startMarker.setAttribute('title', 'ID: ' + stat.id + ' - ' + stat.actionType);
+      // startMarker.setAttribute('title', 'ID: ' + stat.id + ' - ' + stat.actionType + ' - ' + stat.actionState);
+      startMarker.setAttribute('title', 'ID: ' + stat.id + ' - ' + stat.actionType  +  (stat.actionState != null ? ' ( '+stat.actionState+' )' : ''));
       court.appendChild(startMarker);
 
       // For attacks, add end marker and trajectory

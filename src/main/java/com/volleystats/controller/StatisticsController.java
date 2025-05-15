@@ -92,6 +92,7 @@ public class StatisticsController {
             Statistic newStatistic = new Statistic();
             newStatistic.setId(statistic.getId());
             newStatistic.setActionType(statistic.getActionType());
+            newStatistic.setActionState(statistic.getActionState());
             newStatistic.setStartX(statistic.getStartX());
             newStatistic.setStartY(statistic.getStartY());
             newStatistic.setEndX(statistic.getEndX());
