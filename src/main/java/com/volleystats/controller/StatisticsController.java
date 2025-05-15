@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -115,7 +116,8 @@ public class StatisticsController {
         model.addAttribute("statistic", statistic);
         model.addAttribute("match", match);
         model.addAttribute("actionTypes", ActionType.values());
-        model.addAttribute("teams", teamService.findByUser(user));
+//        model.addAttribute("teams", teamService.findByUser(user));
+        model.addAttribute("teams", match.getTeams());
         model.addAttribute("players", playerService.findByUser(user));
 
 //        model.addAttribute("teams", match.getTeams());
@@ -249,7 +251,16 @@ public class StatisticsController {
     public List<Player> getPlayersByTeam(@RequestParam("teamId") Long teamId) {
         try {
             // Use the service method to find players by team ID
-            return playerService.findByTeamId(teamId);
+            List<Player> byTeamId = playerService.findByTeamId(teamId);
+            List<Player> players = new ArrayList<>();
+            for (Player player : byTeamId) {
+                Player newPlayer = new Player();
+                newPlayer.setId(player.getId());
+                newPlayer.setName(player.getName());
+                players.add(newPlayer);
+            }
+
+            return players;
         } catch (Exception e) {
             logger.error("Error retrieving players for team ID {}: {}", teamId, e.getMessage());
             return List.of(); // Return empty list on error

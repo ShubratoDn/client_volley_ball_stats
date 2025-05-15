@@ -2,11 +2,13 @@ package com.volleystats.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "statistics")
+@Data
 public class Statistic {
 
     @Id
@@ -50,6 +52,8 @@ public class Statistic {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    private Integer quality = 1;
 
     // Enum to represent different volleyball actions
     public enum ActionType {

@@ -140,7 +140,7 @@
                                 <a th:href="@{/matches/{id}(id=${statistic.match.id})}" th:text="${statistic.match.homeTeam.name + ' vs ' + statistic.match.awayTeam.name}">Team A vs Team B</a>
                             </p>
                             <p><span class="detail-label">Player:</span>
-                                <a th:href="@{/players/{id}(id=${statistic.player.id})}" th:text="${statistic.player.firstName + ' ' + statistic.player.lastName}">John Doe</a>
+                                <a th:href="@{/players/{id}(id=${statistic.player.id})}" th:text="${statistic.player.name}">John Doe</a>
                             </p>
                             <p><span class="detail-label">Team:</span>
                                 <a th:href="@{/teams/{id}(id=${statistic.team.id})}" th:text="${statistic.team.name}">Team A</a>

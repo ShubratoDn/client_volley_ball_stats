@@ -297,13 +297,13 @@
                                                   th:classappend="'action-type-badge-' + ${stat.actionType.name()}"
                                                   th:text="${stat.actionType.name()}">ATTACK</span>
                 </td>
-                <td th:text="${stat.player.firstName + ' ' + stat.player.lastName}">John Doe</td>
+                <td th:text="${stat.player.name }">John Doe</td>
                 <td th:text="${stat.team.name}">Team A</td>
                 <td>
                   <div class="quality-bar">
-                    <div class="quality-value" th:style="'width:' + ${stat.quality * 20} + '%'"></div>
+                    <div class="quality-value" th:style="'width:' + ${ (stat.quality != null ? stat.quality : 0) * 20} + '%'"></div>
                   </div>
-                  <small th:text="${stat.quality + '/5'}">3/5</small>
+                  <small th:text="${stat.quality != null ? stat.quality : 0 + '/5'}">3/5</small>
                 </td>
                 <td th:text="${#temporals.format(stat.createdAt, 'yyyy-MM-dd HH:mm')}">2025-05-13 14:30</td>
                 <td>

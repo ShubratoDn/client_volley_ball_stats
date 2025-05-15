@@ -71,9 +71,39 @@ public class Match {
     @Column(length = 1000)
     private String notes;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "home_team_id")
+    private Team homeTeam;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "away_team_id")
+    private Team awayTeam;
+
     // Status constants to ensure consistency across the application
     public static final String STATUS_SCHEDULED = "SCHEDULED";
     public static final String STATUS_IN_PROGRESS = "IN_PROGRESS";
     public static final String STATUS_COMPLETED = "COMPLETED";
     public static final String STATUS_CANCELLED = "CANCELLED";
+
+    public Team getHomeTeam() {
+        if(this.teams != null && !this.teams.isEmpty()){
+            return this.teams.get(0);
+        }
+        return homeTeam;
+    }
+
+    public void setHomeTeam(Team homeTeam) {
+        this.homeTeam = homeTeam;
+    }
+
+    public Team getAwayTeam() {
+        if(this.teams != null && !this.teams.isEmpty() && this.teams.size() > 1){
+            return this.teams.get(1);
+        }
+        return awayTeam;
+    }
+
+    public void setAwayTeam(Team awayTeam) {
+        this.awayTeam = awayTeam;
+    }
 }
