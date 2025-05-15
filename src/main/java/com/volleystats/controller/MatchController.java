@@ -158,8 +158,12 @@ public class MatchController {
         Match match = matchService.findById(id)
                 .orElseThrow(() -> new RuntimeException("Match not found"));
 
+        List<Team> teams = teamService.findAllTeams();
+
+        model.addAttribute("statuses", List.of("SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED"));
         model.addAttribute("match", match);
         model.addAttribute("user", user);
+        model.addAttribute("teams", teams);
         model.addAttribute("roles", userDetails.getAuthorities());
 
         return "matches/view";
