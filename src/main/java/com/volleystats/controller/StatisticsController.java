@@ -261,11 +261,30 @@ public class StatisticsController {
      * View statistic details
      */
     @GetMapping("/{id}")
-    public String viewStatistic(@PathVariable("id") Long id, Model model) {
+    public String viewStatistic(@PathVariable("id") Long id, Model model) throws JsonProcessingException {
         User user = getCurrentUser();
 
         Statistic statistic = statisticService.findById(id)
                 .orElseThrow(() -> new RuntimeException("Statistic not found"));
+
+
+        ObjectMapper mapper = new ObjectMapper();
+        // Register JavaTimeModule to handle Java 8 Date/Time types
+        mapper.registerModule(new JavaTimeModule());
+        // Optionally, disable writing dates as timestamps (e.g., 1626876870000)
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        Statistic newStatistic = new Statistic();
+        newStatistic.setStartX(statistic.getStartX());
+        newStatistic.setStartY(statistic.getStartY());
+        newStatistic.setEndX(statistic.getEndX());
+        newStatistic.setEndY(statistic.getEndY());
+        newStatistic.setActionType(statistic.getActionType());
+        newStatistic.setActionState(statistic.getActionState());
+
+        String statisticsJson = mapper.writeValueAsString(newStatistic);
+        model.addAttribute("statisticCoordinate", statisticsJson);
+
 
         model.addAttribute("statistic", statistic);
         model.addAttribute("user", user);
@@ -347,6 +366,7 @@ public class StatisticsController {
             Statistic newStatistic = new Statistic();
             newStatistic.setId(statistic.getId());
             newStatistic.setActionType(statistic.getActionType());
+            newStatistic.setActionState(statistic.getActionState());
             newStatistic.setStartX(statistic.getStartX());
             newStatistic.setStartY(statistic.getStartY());
             newStatistic.setEndX(statistic.getEndX());

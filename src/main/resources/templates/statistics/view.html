@@ -77,6 +77,121 @@
             margin-bottom: 20px;
         }
     </style>
+
+
+    <style>
+        .court-diagram {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            height: 300px;
+            border: 2px solid #333;
+            margin: 20px auto;
+            background-color: #f8f9fa;
+        }
+
+        .court-center-line {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            height: 100%;
+            width: 2px;
+            background-color: #333;
+        }
+
+        .marker {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            margin-left: -6px;
+            margin-top: -6px;
+            border-radius: 50%;
+            z-index: 5;
+        }
+
+        .attack-marker {
+            background-color: #dc3545;
+        }
+
+        .reception-marker {
+            background-color: #198754;
+        }
+
+        .serve-marker {
+            background-color: #0d6efd;
+        }
+
+        .trajectory {
+            position: absolute;
+            height: 2px;
+            background-color: #555;
+            transform-origin: 0 0;
+            z-index: 4;
+        }
+
+        .filter-btn {
+            margin-right: 5px;
+            margin-bottom: 10px;
+        }
+
+        .filter-btn.active {
+            font-weight: bold;
+        }
+
+        .statistic-table tr:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+        }
+
+        .action-type-badge-ATTACK {
+            background-color: #dc3545;
+        }
+
+        .action-type-badge-RECEPTION {
+            background-color: #198754;
+        }
+
+        .action-type-badge-SERVE {
+            background-color: #0d6efd;
+        }
+
+        .quality-bar {
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .quality-value {
+            height: 100%;
+            background-color: #0d6efd;
+        }
+
+        .stat-card {
+            border-radius: 10px;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card-attack {
+            background-color: rgba(220, 53, 69, 0.1);
+            border-left: 4px solid #dc3545;
+        }
+
+        .stat-card-reception {
+            background-color: rgba(25, 135, 84, 0.1);
+            border-left: 4px solid #198754;
+        }
+
+        .stat-card-serve {
+            background-color: rgba(13, 110, 253, 0.1);
+            border-left: 4px solid #0d6efd;
+        }
+    </style>
 </head>
 <body>
 <!-- Navigation -->
@@ -125,6 +240,8 @@
 
             <h2 class="mb-4">Statistic Details</h2>
 
+            <span id="statisticCoordinate" style="display: none" th:text="${statisticCoordinate}"></span>
+
             <!-- Statistic Card -->
             <div class="card mb-4" th:classappend="${statistic.actionType.name() == 'ATTACK' ? 'attack-card' :
                                                       (statistic.actionType.name() == 'RECEPTION' ? 'reception-card' :
@@ -171,34 +288,50 @@
             </div>
 
             <!-- Court Visualization -->
+<!--            <div class="card mb-4">-->
+<!--                <div class="card-header">-->
+<!--                    <h5 class="mb-0">Court Visualization</h5>-->
+<!--                </div>-->
+<!--                <div class="card-body">-->
+<!--                    <div class="court-diagram">-->
+<!--                        <div class="court-center-line"></div>-->
+
+<!--                        &lt;!&ndash; Markers will be positioned dynamically by JavaScript &ndash;&gt;-->
+<!--&lt;!&ndash;                        <div id="startMarker" class="marker start-marker"></div>&ndash;&gt;-->
+<!--&lt;!&ndash;                        <div id="endMarker" class="marker end-marker" th:if="${statistic.actionType.name() == 'ATTACK'}"></div>&ndash;&gt;-->
+<!--&lt;!&ndash;                        <div id="trajectory" class="trajectory" th:if="${statistic.actionType.name() == 'ATTACK'}"></div>&ndash;&gt;-->
+<!--                    </div>-->
+
+<!--                    <div class="row mt-3">-->
+<!--                        <div class="col-md-6">-->
+<!--                            <p><span class="detail-label">Start Position:</span>-->
+<!--                                <span>X: <span th:text="${statistic.startX}">0.25</span>, Y: <span th:text="${statistic.startY}">0.75</span></span>-->
+<!--                            </p>-->
+<!--                        </div>-->
+<!--                        <div class="col-md-6" th:if="${statistic.actionType.name() == 'ATTACK'}">-->
+<!--                            <p><span class="detail-label">End Position:</span>-->
+<!--                                <span>X: <span th:text="${statistic.endX}">0.75</span>, Y: <span th:text="${statistic.endY}">0.25</span></span>-->
+<!--                            </p>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+
+
+
+            <!-- Court Visualization -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0">Court Visualization</h5>
                 </div>
                 <div class="card-body">
-                    <div class="court-diagram">
+                    <div class="court-diagram" id="courtDiagram">
                         <div class="court-center-line"></div>
-
-                        <!-- Markers will be positioned dynamically by JavaScript -->
-                        <div id="startMarker" class="marker start-marker"></div>
-                        <div id="endMarker" class="marker end-marker" th:if="${statistic.actionType.name() == 'ATTACK'}"></div>
-                        <div id="trajectory" class="trajectory" th:if="${statistic.actionType.name() == 'ATTACK'}"></div>
-                    </div>
-
-                    <div class="row mt-3">
-                        <div class="col-md-6">
-                            <p><span class="detail-label">Start Position:</span>
-                                <span>X: <span th:text="${statistic.startX}">0.25</span>, Y: <span th:text="${statistic.startY}">0.75</span></span>
-                            </p>
-                        </div>
-                        <div class="col-md-6" th:if="${statistic.actionType.name() == 'ATTACK'}">
-                            <p><span class="detail-label">End Position:</span>
-                                <span>X: <span th:text="${statistic.endX}">0.75</span>, Y: <span th:text="${statistic.endY}">0.25</span></span>
-                            </p>
-                        </div>
+                        <!-- Markers will be added dynamically by JavaScript -->
                     </div>
                 </div>
             </div>
+
 
             <!-- Action Buttons -->
             <div class="d-flex justify-content-between">
@@ -237,60 +370,110 @@
 
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // For demonstration purposes - if no actual data is available
-        // These values should come from the model in production
-        let startX = 0.25;
-        let startY = 0.75;
-        let endX = 0.75;
-        let endY = 0.25;
-        let actionType = "ATTACK";
+        // Get the court diagram
+        const court = document.getElementById('courtDiagram');
+        if (!court) return;
 
-        // Try to get real values if available
-        try {
-            // These should be populated from the Thymeleaf model
-            startX = [[${statistic.startX}]] || startX;
-            startY = [[${statistic.startY}]] || startY;
-            endX = [[${statistic.endX}]] || endX;
-            endY = [[${statistic.endY}]] || endY;
-            actionType = [[${statistic.actionType}]] || actionType;
-        } catch (e) {
-            console.log("Using default values for court visualization");
-        }
-
-        // Position the markers
-        const court = document.querySelector('.court-diagram');
         const courtWidth = court.offsetWidth;
         const courtHeight = court.offsetHeight;
 
-        const startMarker = document.getElementById('startMarker');
-        startMarker.style.left = (startX * courtWidth) + 'px';
-        startMarker.style.top = (startY * courtHeight) + 'px';
 
-        // Only show end marker and trajectory for attacks
-        if (actionType === "ATTACK") {
-            const endMarker = document.getElementById('endMarker');
-            if (endMarker) {
-                endMarker.style.left = (endX * courtWidth) + 'px';
-                endMarker.style.top = (endY * courtHeight) + 'px';
+        let statistics = [];
+
+        // ✅ Get dynamic statistics data from embedded JSON
+        const jsonScriptTag = document.getElementById('statisticCoordinate');
+
+
+        if (jsonScriptTag) {
+            try {
+                let item = JSON.parse(jsonScriptTag.textContent);
+
+                    let stat = {
+                        id: item.id,
+                        actionType: item.actionType,
+                        actionState: item.actionState,
+                        startX: normalize(item.startX),
+                        startY: normalize(item.startY),
+                        quality: 3 // default quality
+                    };
+
+                    if (item.endX !== null && item.endY !== null) {
+                        stat.endX = normalize(item.endX);
+                        stat.endY = normalize(item.endY);
+                    }
+                    statistics.push(stat);
+
+            } catch (e) {
+                console.error('Failed to parse statistics JSON:', e);
+            }
+        }
+
+        function normalize(value, max = 100) {
+            return +(value / max).toFixed(3);
+        }
+
+        console.log("Printing");
+        console.log(statistics);
+
+
+
+        // Add markers and trajectories for each statistic
+        statistics.forEach(stat => {
+            // Create and position start marker
+            const startMarker = document.createElement('div');
+            startMarker.classList.add('marker');
+
+            // Set marker color based on action type
+            if (stat.actionType === 'ATTACK') {
+                startMarker.classList.add('attack-marker');
+            } else if (stat.actionType === 'RECEPTION') {
+                startMarker.classList.add('reception-marker');
+            } else if (stat.actionType === 'SERVE') {
+                startMarker.classList.add('serve-marker');
             }
 
-            // Draw trajectory line
-            const trajectory = document.getElementById('trajectory');
-            if (trajectory) {
-                const dx = endX * courtWidth - startX * courtWidth;
-                const dy = endY * courtHeight - startY * courtHeight;
+            // Position the marker
+            startMarker.style.left = (stat.startX * courtWidth) + 'px';
+            startMarker.style.top = (stat.startY * courtHeight) + 'px';
+            // startMarker.setAttribute('title', 'ID: ' + stat.id + ' - ' + stat.actionType);
+            // startMarker.setAttribute('title', 'ID: ' + stat.id + ' - ' + stat.actionType + ' - ' + stat.actionState);
+            startMarker.setAttribute('title', 'ID: ' + stat.id + ' - ' + stat.actionType  +  (stat.actionState != null ? ' ( '+stat.actionState+' )' : ''));
+            court.appendChild(startMarker);
+
+            // For attacks, add end marker and trajectory
+            if (stat.actionType === 'ATTACK' && stat.endX && stat.endY) {
+                // Create and position end marker
+                const endMarker = document.createElement('div');
+                endMarker.classList.add('marker', 'attack-marker');
+                endMarker.style.opacity = '0.7';
+                endMarker.style.left = (stat.endX * courtWidth) + 'px';
+                endMarker.style.top = (stat.endY * courtHeight) + 'px';
+                court.appendChild(endMarker);
+
+                // Create and position trajectory line
+                const trajectory = document.createElement('div');
+                trajectory.classList.add('trajectory');
+
+                const dx = stat.endX * courtWidth - stat.startX * courtWidth;
+                const dy = stat.endY * courtHeight - stat.startY * courtHeight;
                 const length = Math.sqrt(dx * dx + dy * dy);
                 const angle = Math.atan2(dy, dx) * 180 / Math.PI;
 
                 trajectory.style.width = length + 'px';
-                trajectory.style.left = (startX * courtWidth) + 'px';
-                trajectory.style.top = (startY * courtHeight) + 'px';
+                trajectory.style.left = (stat.startX * courtWidth) + 'px';
+                trajectory.style.top = (stat.startY * courtHeight) + 'px';
                 trajectory.style.transform = 'rotate(' + angle + 'deg)';
+
+                court.appendChild(trajectory);
             }
-        }
+        });
     });
 </script>
+
+
 </body>
 </html>
