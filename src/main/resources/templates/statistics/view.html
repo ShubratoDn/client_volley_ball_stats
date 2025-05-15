@@ -262,8 +262,11 @@
                             <p><span class="detail-label">Team:</span>
                                 <a th:href="@{/teams/{id}(id=${statistic.team.id})}" th:text="${statistic.team.name}">Team A</a>
                             </p>
-                            <p><span class="detail-label">Quality:</span>
-                                <span th:text="${statistic.quality}">3</span>/5
+                            <p><span class="detail-label">Action Type:</span>
+                                <span th:text="${statistic.actionType}"></span>
+                            </p>
+                            <p><span class="detail-label">Action State:</span>
+                                <span th:text="${statistic.actionState}"></span>
                             </p>
                             <p><span class="detail-label">Notes:</span>
                                 <span th:text="${statistic.notes ?: 'No notes provided'}">Strong cross-court attack</span>
