@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main}">
+<head>
+  <title>Tournament Matches</title>
+</head>
+<body>
+<div layout:fragment="content">
+  <div class="container mt-4">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a th:href="@{/matches}">Matches</a></li>
+        <li class="breadcrumb-item"><a th:href="@{/tournaments/{id}(id=${tournament.id})}" th:text="${tournament.name}">Tournament</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Matches</li>
+      </ol>
+    </nav>
+
+    <div class="card">
+      <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h2 class="mb-0" th:text="${tournament.name + ' - Matches'}">Tournament Matches</h2>
+        <a th:href="@{/matches/create}" class="btn btn-primary">Create Match</a>
+      </div>
+      <div class="card-body p-0">
+        <div th:if="${matches.empty}" class="p-4 text-center">
+          <p>No matches found for this tournament.</p>
+        </div>
+        <div th:unless="${matches.empty}" class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+            <tr>
+              <th>Date</th>
+              <th>Location</th>
+              <th>Status</th>
+              <th>Teams</th>
+              <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="match : ${matches}">
+              <td th:text="${#temporals.format(match.matchDate, 'MMM dd, yyyy')}"></td>
+              <td th:text="${match.location}"></td>
+              <td>
+                <span th:if="${match.status == 'SCHEDULED'}" class="badge bg-info">Scheduled</span>
+                <span th:if="${match.status == 'IN_PROGRESS'}" class="badge bg-warning">In Progress</span>
+                <span th:if="${match.status == 'COMPLETED'}" class="badge bg-success">Completed</span>
+                <span th:if="${match.status == 'CANCELLED'}" class="badge bg-danger">Cancelled</span>
+              </td>
+              <td>
+                <span th:if="${match.teams.empty}">No teams</span>
+                <span th:unless="${match.teams.empty}">
+                                            <span th:each="team, iterStat : ${match.teams}">
+                                                <a th:href="@{/teams/{id}(id=${team.id})}" th:text="${team.name}"></a>
+                                                <span th:if="${!iterStat.last}" class="text-muted"> vs </span>
+                                            </span>
+                                        </span>
+              </td>
+              <td>
+                <div class="btn-group">
+                  <a th:href="@{/matches/{id}(id=${match.id})}" class="btn btn-sm btn-outline-primary">View</a>
+                  <a th:href="@{/matches/{id}/edit(id=${match.id})}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                </div>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tournament Info Section -->
+    <div class="card mt-4">
+      <div class="card-header bg-light">
+        <h5 class="mb-0">Tournament Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <table class="table">
+              <tr>
+                <th>Name:</th>
+                <td th:text="${tournament.name}"></td>
+              </tr>
+              <tr th:if="${tournament.startDate != null}">
+                <th>Start Date:</th>
+                <td th:text="${#temporals.format(tournament.startDate, 'MMMM dd, yyyy')}"></td>
+              </tr>
+              <tr th:if="${tournament.endDate != null}">
+                <th>End Date:</th>
+                <td th:text="${#temporals.format(tournament.endDate, 'MMMM dd, yyyy')}"></td>
+              </tr>
+              <tr th:if="${tournament.location != null}">
+                <th>Location:</th>
+                <td th:text="${tournament.location}"></td>
+              </tr>
+            </table>
+          </div>
+          <div class="col-md-6">
+            <div class="d-grid gap-2">
+              <a th:href="@{/tournaments/{id}(id=${tournament.id})}" class="btn btn-outline-primary">View Tournament Details</a>
+              <a th:href="@{/statistics/tournament/{id}(id=${tournament.id})}" class="btn btn-outline-info">Tournament Statistics</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

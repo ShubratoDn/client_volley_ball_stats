@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Match Statistics | VolleyStats</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    .court-diagram {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      height: 300px;
+      border: 2px solid #333;
+      margin: 20px auto;
+      background-color: #f8f9fa;
+    }
+
+    .court-center-line {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      height: 100%;
+      width: 2px;
+      background-color: #333;
+    }
+
+    .marker {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      margin-left: -6px;
+      margin-top: -6px;
+      border-radius: 50%;
+      z-index: 5;
+    }
+
+    .attack-marker {
+      background-color: #dc3545;
+    }
+
+    .reception-marker {
+      background-color: #198754;
+    }
+
+    .serve-marker {
+      background-color: #0d6efd;
+    }
+
+    .trajectory {
+      position: absolute;
+      height: 2px;
+      background-color: #555;
+      transform-origin: 0 0;
+      z-index: 4;
+    }
+
+    .filter-btn {
+      margin-right: 5px;
+      margin-bottom: 10px;
+    }
+
+    .filter-btn.active {
+      font-weight: bold;
+    }
+
+    .statistic-table tr:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+      cursor: pointer;
+    }
+
+    .action-type-badge-ATTACK {
+      background-color: #dc3545;
+    }
+
+    .action-type-badge-RECEPTION {
+      background-color: #198754;
+    }
+
+    .action-type-badge-SERVE {
+      background-color: #0d6efd;
+    }
+
+    .quality-bar {
+      height: 8px;
+      background-color: #e9ecef;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .quality-value {
+      height: 100%;
+      background-color: #0d6efd;
+    }
+
+    .stat-card {
+      border-radius: 10px;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .stat-card-attack {
+      background-color: rgba(220, 53, 69, 0.1);
+      border-left: 4px solid #dc3545;
+    }
+
+    .stat-card-reception {
+      background-color: rgba(25, 135, 84, 0.1);
+      border-left: 4px solid #198754;
+    }
+
+    .stat-card-serve {
+      background-color: rgba(13, 110, 253, 0.1);
+      border-left: 4px solid #0d6efd;
+    }
+  </style>
+</head>
+<body>
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container">
+    <a class="navbar-brand" href="/">VolleyStats</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link" href="/dashboard">Dashboard</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/teams">Teams</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/players">Players</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/matches">Matches</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="/statistics">Statistics</a>
+        </li>
+      </ul>
+      <div class="d-flex">
+        <span class="navbar-text me-3" th:text="${user.username}">Username</span>
+        <form action="/logout" method="post">
+          <button class="btn btn-outline-light btn-sm" type="submit">Logout</button>
+          <input type="hidden" th:name="${_csrf?.parameterName}" th:value="${_csrf?.token}" />
+        </form>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Content -->
+<div class="container my-4">
+  <div class="row">
+    <div class="col-12">
+      <a href="/statistics" class="btn btn-secondary mb-3">
+        <i class="fas fa-arrow-left"></i> Back to Statistics
+      </a>
+
+      <!-- Match Info -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3 class="mb-0">Match Details</h3>
+          <div th:if="${!match.teams.empty}" class="mt-2">
+                            <span th:each="team, iterStat : ${match.teams}">
+                                <span th:text="${team.name}">Team Name</span>
+                                <span th:if="${!iterStat.last}"> vs </span>
+                            </span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <p><strong>Date:</strong> <span th:text="${match.matchDate != null ? #temporals.format(match.matchDate, 'yyyy-MM-dd HH:mm') : 'N/A'}">2025-05-13 19:00</span></p>
+              <p><strong>Location:</strong> <span th:text="${match.location ?: 'N/A'}">City Sports Hall</span></p>
+            </div>
+            <div class="col-md-4">
+              <p><strong>Status:</strong> <span th:text="${match.status ?: 'N/A'}">COMPLETED</span></p>
+              <p><strong>Tournament:</strong> <span th:text="${match.tournament != null ? match.tournament.name : 'N/A'}">League 2025</span></p>
+            </div>
+            <div class="col-md-4">
+              <p><strong>Created by:</strong> <span th:text="${match.createdBy != null ? match.createdBy.username : 'N/A'}">coach1</span></p>
+              <p><strong>Notes:</strong> <span th:text="${match.notes ?: 'No notes'}">Important match</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistics Summary -->
+      <div class="row mb-4">
+        <div class="col-md-4">
+          <div class="card stat-card stat-card-attack">
+            <div class="card-body text-center">
+              <h1 class="display-4" th:text="${attackCount}">15</h1>
+              <h5>Attacks</h5>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card stat-card stat-card-reception">
+            <div class="card-body text-center">
+              <h1 class="display-4" th:text="${receptionCount}">22</h1>
+              <h5>Receptions</h5>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card stat-card stat-card-serve">
+            <div class="card-body text-center">
+              <h1 class="display-4" th:text="${serveCount}">18</h1>
+              <h5>Serves</h5>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons and Filters -->
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <a th:href="@{/statistics/match/{id}(id=${match.id})}"
+             class="btn btn-outline-secondary filter-btn"
+             th:classappend="${filteredActionType == null ? 'active' : ''}">
+            All
+          </a>
+          <a th:href="@{/statistics/match/{id}/filter(id=${match.id}, actionType='ATTACK')}"
+             class="btn btn-outline-danger filter-btn"
+             th:classappend="${filteredActionType != null && filteredActionType.name() == 'ATTACK' ? 'active' : ''}">
+            Attacks
+          </a>
+          <a th:href="@{/statistics/match/{id}/filter(id=${match.id}, actionType='RECEPTION')}"
+             class="btn btn-outline-success filter-btn"
+             th:classappend="${filteredActionType != null && filteredActionType.name() == 'RECEPTION' ? 'active' : ''}">
+            Receptions
+          </a>
+          <a th:href="@{/statistics/match/{id}/filter(id=${match.id}, actionType='SERVE')}"
+             class="btn btn-outline-primary filter-btn"
+             th:classappend="${filteredActionType != null && filteredActionType.name() == 'SERVE' ? 'active' : ''}">
+            Serves
+          </a>
+        </div>
+        <div>
+          <a th:href="@{/statistics/create/{matchId}(matchId=${match.id})}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add Statistic
+          </a>
+        </div>
+      </div>
+
+      <!-- Court Visualization -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Court Visualization</h5>
+        </div>
+        <div class="card-body">
+          <div class="court-diagram" id="courtDiagram">
+            <div class="court-center-line"></div>
+            <!-- Markers will be added dynamically by JavaScript -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistics Table -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Statistics List</h5>
+        </div>
+        <div class="card-body">
+          <div th:if="${statistics.isEmpty()}" class="alert alert-info">
+            No statistics available for this match yet.
+          </div>
+          <div th:if="${!statistics.isEmpty()}">
+            <table class="table table-bordered statistic-table">
+              <thead>
+              <tr>
+                <th>ID</th>
+                <th>Action</th>
+                <th>Player</th>
+                <th>Team</th>
+                <th>Quality</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr th:each="stat : ${statistics}" th:onclick="'window.location.href=\'' + @{/statistics/{id}(id=${stat.id})} + '\''">
+                <td th:text="${stat.id}">1</td>
+                <td>
+                                            <span class="badge"
+                                                  th:classappend="'action-type-badge-' + ${stat.actionType.name()}"
+                                                  th:text="${stat.actionType.name()}">ATTACK</span>
+                </td>
+                <td th:text="${stat.player.firstName + ' ' + stat.player.lastName}">John Doe</td>
+                <td th:text="${stat.team.name}">Team A</td>
+                <td>
+                  <div class="quality-bar">
+                    <div class="quality-value" th:style="'width:' + ${stat.quality * 20} + '%'"></div>
+                  </div>
+                  <small th:text="${stat.quality + '/5'}">3/5</small>
+                </td>
+                <td th:text="${#temporals.format(stat.createdAt, 'yyyy-MM-dd HH:mm')}">2025-05-13 14:30</td>
+                <td>
+                  <a th:href="@{/statistics/{id}(id=${stat.id})}" class="btn btn-sm btn-info">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                  <a th:href="@{/statistics/edit/{id}(id=${stat.id})}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-edit"></i>
+                  </a>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Sample data for visualization if no real data is available
+    const sampleStatistics = [
+      { id: 1, actionType: 'ATTACK', startX: 0.2, startY: 0.8, endX: 0.7, endY: 0.3, quality: 4 },
+      { id: 2, actionType: 'RECEPTION', startX: 0.7, startY: 0.3, quality: 3 },
+      { id: 3, actionType: 'SERVE', startX: 0.1, startY: 0.2, quality: 5 },
+      { id: 4, actionType: 'ATTACK', startX: 0.3, startY: 0.7, endX: 0.8, endY: 0.2, quality: 2 },
+      { id: 5, actionType: 'RECEPTION', startX: 0.6, startY: 0.6, quality: 4 }
+    ];
+
+    // Get the court diagram
+    const court = document.getElementById('courtDiagram');
+    if (!court) return;
+
+    const courtWidth = court.offsetWidth;
+    const courtHeight = court.offsetHeight;
+
+    // Try to get actual statistics, fall back to samples if needed
+    let statistics = [];
+    if (document.querySelectorAll('.statistic-table tbody tr').length > 0) {
+      document.querySelectorAll('.statistic-table tbody tr').forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 7) {
+          const actionType = cells[1].querySelector('.badge')?.textContent || '';
+
+          // In a real application, you would get these from data attributes
+          // stored in the HTML or via Ajax
+          const startX = Math.random(); // This is just for the demo
+          const startY = Math.random(); // This is just for the demo
+          let endX = null, endY = null;
+
+          if (actionType === 'ATTACK') {
+            endX = Math.random();
+            endY = Math.random();
+          }
+
+          statistics.push({
+            id: cells[0].textContent,
+            actionType: actionType,
+            startX: startX,
+            startY: startY,
+            endX: endX,
+            endY: endY,
+            quality: parseInt(cells[4].querySelector('small')?.textContent) || 3
+          });
+        }
+      });
+    }
+
+    // If we couldn't get real data, use the sample data
+    if (statistics.length === 0) {
+      statistics = sampleStatistics;
+    }
+
+    // Add markers and trajectories for each statistic
+    statistics.forEach(stat => {
+      // Create and position start marker
+      const startMarker = document.createElement('div');
+      startMarker.classList.add('marker');
+
+      // Set marker color based on action type
+      if (stat.actionType === 'ATTACK') {
+        startMarker.classList.add('attack-marker');
+      } else if (stat.actionType === 'RECEPTION') {
+        startMarker.classList.add('reception-marker');
+      } else if (stat.actionType === 'SERVE') {
+        startMarker.classList.add('serve-marker');
+      }
+
+      // Position the marker
+      startMarker.style.left = (stat.startX * courtWidth) + 'px';
+      startMarker.style.top = (stat.startY * courtHeight) + 'px';
+      startMarker.setAttribute('title', 'ID: ' + stat.id + ' - ' + stat.actionType);
+      court.appendChild(startMarker);
+
+      // For attacks, add end marker and trajectory
+      if (stat.actionType === 'ATTACK' && stat.endX && stat.endY) {
+        // Create and position end marker
+        const endMarker = document.createElement('div');
+        endMarker.classList.add('marker', 'attack-marker');
+        endMarker.style.opacity = '0.7';
+        endMarker.style.left = (stat.endX * courtWidth) + 'px';
+        endMarker.style.top = (stat.endY * courtHeight) + 'px';
+        court.appendChild(endMarker);
+
+        // Create and position trajectory line
+        const trajectory = document.createElement('div');
+        trajectory.classList.add('trajectory');
+
+        const dx = stat.endX * courtWidth - stat.startX * courtWidth;
+        const dy = stat.endY * courtHeight - stat.startY * courtHeight;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+        trajectory.style.width = length + 'px';
+        trajectory.style.left = (stat.startX * courtWidth) + 'px';
+        trajectory.style.top = (stat.startY * courtHeight) + 'px';
+        trajectory.style.transform = 'rotate(' + angle + 'deg)';
+
+        court.appendChild(trajectory);
+      }
+    });
+  });
+</script>
+</body>
+</html>

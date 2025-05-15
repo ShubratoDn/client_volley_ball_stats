@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main}">
+<head>
+  <title>Player Statistics</title>
+  <style>
+    .court-container {
+      position: relative;
+      width: 100%;
+      height: 400px;
+      border: 2px solid #000;
+      background-color: #f5f5f5;
+      margin-bottom: 20px;
+    }
+
+    .net {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 2px;
+      height: 100%;
+      background-color: #000;
+    }
+
+    .statistic-point {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+    }
+
+    .statistic-line {
+      position: absolute;
+      height: 2px;
+      transform-origin: 0 0;
+      cursor: pointer;
+    }
+
+    .action-filter-btn.active {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .stat-details {
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 5px;
+      transition: all 0.2s;
+    }
+
+    .stat-details:hover {
+      transform: translateX(5px);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .stat-card {
+      border-radius: 10px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .tooltip {
+      position: absolute;
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 3px;
+      font-size: 12px;
+      z-index: 100;
+      display: none;
+    }
+
+    .player-profile {
+      display: flex;
+      align-items: center;
+    }
+
+    .player-avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background-color: #e9ecef;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      color: #6c757d;
+      margin-right: 20px;
+    }
+
+    .player-info {
+      flex-grow: 1;
+    }
+
+    .chart-container {
+      height: 300px;
+    }
+  </style>
+</head>
+<body>
+<div layout:fragment="content">
+  <div class="container mt-4">
+    <div class="alert alert-success" th:if="${successMessage}" th:text="${successMessage}"></div>
+    <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+    <!-- Player Info -->
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h3>Player Statistics</h3>
+          <a th:href="@{/statistics}" class="btn btn-light">Back to All Matches</a>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="player-profile">
+          <div class="player-avatar">
+            <i class="fas fa-user"></i>
+          </div>
+          <div class="player-info">
+            <h2 th:text="${player.fullName}">Player Name</h2>
+            <p><strong>Position:</strong> <span th:text="${player.position}">Position</span></p>
+            <p><strong>Jersey Number:</strong> <span th:text="${player.jerseyNumber}">Jersey Number</span></p>
+            <p><strong>Team:</strong> <span th:text="${player.team != null ? player.team.name : 'No Team'}">Team Name</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics Summary -->
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <div class="card stat-card bg-primary text-white">
+          <div class="card-body text-center">
+            <h3 class="display-4" th:text="${attackCount}">0</h3>
+            <h5>Attacks</h5>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card stat-card bg-success text-white">
+          <div class="card-body text-center">
+            <h3 class="display-4" th:text="${serveCount}">0</h3>
+            <h5>Serves</h5>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card stat-card bg-info text-white">
+          <div class="card-body text-center">
+            <h3 class="display-4" th:text="${receptionCount}">0</h3>
+            <h5>Receptions</h5>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistical Charts -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5>Performance Chart</h5>
+      </div>
+      <div class="card-body">
+        <div class="chart-container">
+          <canvas id="statsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Court Visualization -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5>Court Visualization</h5>
+      </div>
+      <div class="card-body">
+        <div class="court-container" id="courtVisualization">
+          <div class="net"></div>
+          <div class="tooltip" id="statTooltip"></div>
+          <!-- Statistics will be added here by JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics By Match -->
+    <div class="card">
+      <div class="card-header">
+        <h5>Statistics By Match</h5>
+      </div>
+      <div class="card-body">
+        <div th:if="${#lists.isEmpty(statistics)}" class="alert alert-info">
+          No statistics found for this player.
+        </div>
+
+        <div th:unless="${#lists.isEmpty(statistics)}">
+          <!-- Group statistics by match -->
+          <div th:each="match : ${statistics.?[true].![match].^{id}}">
+            <div class="card mb-3">
+              <div class="card-header bg-light">
+                <strong th:text="${statistics.?[match.id == __${match}__].![match.location][0]}">Match Location</strong>
+                <span class="text-muted"
+                      th:text="${' - ' + #temporals.format(statistics.?[match.id == __${match}__].![match.matchDate][0], 'yyyy-MM-dd HH:mm')}">
+                                        Date
+                                    </span>
+              </div>
+              <div class="card-body">
+                <div th:each="stat : ${statistics.?[match.id == __${match}__]}" class="stat-details"
+                     th:style="'border-left: 4px solid ' + ${stat.color}">
+                  <div class="row">
+                    <div class="col-md-3">
+                      <strong th:text="${stat.actionType}">Action Type</strong>
+                    </div>
+                    <div class="col-md-7">
+                      <span th:if="${stat.notes != null && !stat.notes.empty}" th:text="${stat.notes}">Notes</span>
+                      <span th:unless="${stat.notes != null && !stat.notes.empty}">No notes</span>
+                    </div>
+                    <div class="col-md-2 text-end">
+                      <a th:href="@{/statistics/{id}(id=${stat.id})}" class="btn btn-sm btn-outline-primary">Details</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Include Chart.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+
+  <!-- JavaScript for visualization and charts -->
+  <script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+      const courtContainer = document.getElementById('courtVisualization');
+      const tooltip = document.getElementById('statTooltip');
+      const statistics = /*[[${statistics}]]*/ [];
+
+      // Calculate court dimensions
+      const courtWidth = courtContainer.offsetWidth;
+      const courtHeight = courtContainer.offsetHeight;
+
+      // Render statistics on the court
+      statistics.forEach(function(stat) {
+        // Convert coordinates from 0-100 scale to pixels
+        const startX = stat.startX * courtWidth / 100;
+        const startY = stat.startY * courtHeight / 100;
+
+        if (stat.actionType === 'ATTACK' && stat.endX !== null && stat.endY !== null) {
+          // For attacks, draw a line from start to end point
+          const endX = stat.endX * courtWidth / 100;
+          const endY = stat.endY * courtHeight / 100;
+
+          // Calculate line length and angle
+          const dx = endX - startX;
+          const dy = endY - startY;
+          const length = Math.sqrt(dx * dx + dy * dy);
+          const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+          // Create line element
+          const line = document.createElement('div');
+          line.className = 'statistic-line';
+          line.style.width = length + 'px';
+          line.style.backgroundColor = stat.color;
+          line.style.left = startX + 'px';
+          line.style.top = startY + 'px';
+          line.style.transform = `rotate(${angle}deg)`;
+          line.dataset.statId = stat.id;
+          line.dataset.matchId = stat.match.id;
+
+          // Add tooltip event
+          line.addEventListener('mouseover', function(e) {
+            showTooltip(e, stat);
+          });
+          line.addEventListener('mouseout', function() {
+            hideTooltip();
+          });
+
+          courtContainer.appendChild(line);
+
+          // Add a point at the start
+          const startPoint = document.createElement('div');
+          startPoint.className = 'statistic-point';
+          startPoint.style.backgroundColor = stat.color;
+          startPoint.style.left = startX + 'px';
+          startPoint.style.top = startY + 'px';
+          startPoint.dataset.statId = stat.id;
+          startPoint.dataset.matchId = stat.match.id;
+
+          startPoint.addEventListener('mouseover', function(e) {
+            showTooltip(e, stat);
+          });
+          startPoint.addEventListener('mouseout', function() {
+            hideTooltip();
+          });
+
+          courtContainer.appendChild(startPoint);
+
+        } else {
+          // For reception and serve, just draw a point
+          const point = document.createElement('div');
+          point.className = 'statistic-point';
+          point.style.backgroundColor = stat.color;
+          point.style.left = startX + 'px';
+          point.style.top = startY + 'px';
+          point.dataset.statId = stat.id;
+          point.dataset.matchId = stat.match.id;
+
+          point.addEventListener('mouseover', function(e) {
+            showTooltip(e, stat);
+          });
+          point.addEventListener('mouseout', function() {
+            hideTooltip();
+          });
+
+          courtContainer.appendChild(point);
+        }
+      });
+
+      // Tooltip functions
+      function showTooltip(e, stat) {
+        const matchLocation = stat.match ? stat.match.location : 'Unknown Match';
+        const matchDate = stat.match && stat.match.matchDate ?
+                new Date(stat.match.matchDate).toLocaleDateString() : 'Unknown Date';
+        const notes = stat.notes ? stat.notes : 'No notes';
+
+        tooltip.innerHTML = `
+                        <div><strong>${stat.actionType}</strong></div>
+                        <div>Match: ${matchLocation}</div>
+                        <div>Date: ${matchDate}</div>
+                        <div>Notes: ${notes}</div>
+                    `;
+
+        tooltip.style.display = 'block';
+        tooltip.style.left = (e.pageX - courtContainer.getBoundingClientRect().left + 10) + 'px';
+        tooltip.style.top = (e.pageY - courtContainer.getBoundingClientRect().top - 60) + 'px';
+      }
+
+      function hideTooltip() {
+        tooltip.style.display = 'none';
+      }
+
+      // Create performance chart
+      const chartCtx = document.getElementById('statsChart').getContext('2d');
+
+      // Count statistics per match
+      const matches = [];
+      const attacksPerMatch = [];
+      const servesPerMatch = [];
+      const receptionsPerMatch = [];
+
+      // Get unique matches
+      const uniqueMatches = [...new Set(statistics.map(stat => stat.match ? stat.match.id : null))];
+
+      uniqueMatches.forEach(matchId => {
+        if (matchId === null) return;
+
+        const matchStats = statistics.filter(stat => stat.match && stat.match.id === matchId);
+        const matchInfo = matchStats[0].match;
+
+        // Format date to simple format
+        const date = new Date(matchInfo.matchDate);
+        const formattedDate = `${date.getMonth()+1}/${date.getDate()}`;
+
+        matches.push(matchInfo.location + ' (' + formattedDate + ')');
+
+        // Count stats by type
+        const attacks = matchStats.filter(stat => stat.actionType === 'ATTACK').length;
+        const serves = matchStats.filter(stat => stat.actionType === 'SERVE').length;
+        const receptions = matchStats.filter(stat => stat.actionType === 'RECEPTION').length;
+
+        attacksPerMatch.push(attacks);
+        servesPerMatch.push(serves);
+        receptionsPerMatch.push(receptions);
+      });
+
+      const chart = new Chart(chartCtx, {
+        type: 'bar',
+        data: {
+          labels: matches,
+          datasets: [
+            {
+              label: 'Attacks',
+              data: attacksPerMatch,
+              backgroundColor: 'rgba(255, 99, 132, 0.7)',
+              borderColor: 'rgb(255, 99, 132)',
+              borderWidth: 1
+            },
+            {
+              label: 'Serves',
+              data: servesPerMatch,
+              backgroundColor: 'rgba(75, 192, 192, 0.7)',
+              borderColor: 'rgb(75, 192, 192)',
+              borderWidth: 1
+            },
+            {
+              label: 'Receptions',
+              data: receptionsPerMatch,
+              backgroundColor: 'rgba(54, 162, 235, 0.7)',
+              borderColor: 'rgb(54, 162, 235)',
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Count'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Matches'
+              }
+            }
+          }
+        }
+      });
+    });
+  </script>
+</div>
+</body>
+</html>
