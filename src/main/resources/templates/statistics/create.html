@@ -522,6 +522,23 @@
                 margin-bottom: 0;
             }
         }
+
+        #stateOptionsContainer{
+            margin-top: 27px;
+            border: 1px solid #e1d7d7;
+            width: fit-content;
+
+            border-radius: 7px;
+        }
+
+        .state-options{
+            margin: 10px;
+        }
+
+        .state-options label{
+            font-weight: bold;
+            margin-right: 25px;
+        }
     </style>
 </head>
 <body>
@@ -595,7 +612,43 @@
                                     <input type="hidden" id="actionType" name="actionType" required />
                                 </div>
                             </div>
+
+                            <!-- STATE containers for each action type -->
+                            <div id="stateOptionsContainer" class="mt-3">
+
+                                <!-- ATTACK States -->
+                                <div class="state-options" id="attackStates" style="display: none;">
+                                    <label>Attack State:</label>
+                                    <select name="actionState" class="form-control" disabled>
+                                        <option value="KILL">Kill</option>
+                                        <option value="SHOT">Shot</option>
+                                        <option value="ATTACK_ERROR">Error</option>
+                                    </select>
+                                </div>
+
+                                <!-- RECEPTION States -->
+                                <div class="state-options" id="receptionStates" style="display: none;">
+                                    <label>Reception State:</label>
+                                    <select name="actionState" class="form-control" disabled>
+                                        <option value="REGULAR_RECEPTION">Regular Reception</option>
+                                        <option value="RECEPTION_ERROR">Error</option>
+                                    </select>
+                                </div>
+
+                                <!-- SERVE States -->
+                                <div class="state-options" id="serveStates" style="display: none;">
+                                    <label>Serve State:</label>
+                                    <select name="actionState" class="form-control" disabled>
+                                        <option value="ACE">Ace</option>
+                                        <option value="SERVE_ERROR">Error</option>
+                                        <option value="BREAK_POINT">Break Point</option>
+                                        <option value="FREEBALL">Freeball</option>
+                                    </select>
+                                </div>
+
+                            </div>
                         </div>
+
                     </div>
 
                     <!-- Team and Player Selection -->
@@ -783,8 +836,21 @@
             });
 
             // Action type selection
+            // State container elements
+            const attackStates = document.getElementById('attackStates');
+            const receptionStates = document.getElementById('receptionStates');
+            const serveStates = document.getElementById('serveStates');
+
+            const stateContainers = {
+                ATTACK: attackStates,
+                RECEPTION: receptionStates,
+                SERVE: serveStates
+            };
+
+            const stateSelects = document.querySelectorAll('select[name="actionState"]');
+
             actionTypeBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
+                btn.addEventListener('click', function () {
                     // Remove active class from all buttons
                     actionTypeBtns.forEach(b => b.classList.remove('active'));
 
@@ -798,7 +864,7 @@
                     // Reset the court
                     resetCourt();
 
-                    // Set initial colors for elements based on action type
+                    // Set color logic
                     let defaultColor = "#FF0000";
                     if (selectedActionType === "RECEPTION") {
                         defaultColor = "#4361ee";
@@ -812,7 +878,7 @@
                     endPointElement.style.backgroundColor = defaultColor;
                     lineElement.style.backgroundColor = defaultColor;
 
-                    // Update court instruction based on action type
+                    // Instruction update
                     if (selectedActionType === "ATTACK") {
                         coordinateDisplay.innerHTML = '<i class="fas fa-info-circle me-1"></i>Click and drag to create an attack vector';
                     } else if (selectedActionType === "RECEPTION") {
@@ -821,10 +887,24 @@
                         coordinateDisplay.innerHTML = '<i class="fas fa-info-circle me-1"></i>Click to mark serve point';
                     }
 
-                    // Update submit button state
+                    // Show the correct state section and disable others
+                    Object.values(stateContainers).forEach(div => {
+                        div.style.display = 'none';
+                        const select = div.querySelector('select[name="actionState"]');
+                        if (select) select.disabled = true;
+                    });
+
+                    const activeDiv = stateContainers[selectedActionType];
+                    if (activeDiv) {
+                        activeDiv.style.display = 'block';
+                        const select = activeDiv.querySelector('select[name="actionState"]');
+                        if (select) select.disabled = false;
+                    }
+
                     updateSubmitButtonState();
                 });
             });
+
 
             // Court click handling
             courtContainer.addEventListener('mousedown', function(e) {

@@ -145,14 +145,11 @@ public class StatisticsController {
         model.addAttribute("statistic", statistic);
         model.addAttribute("match", match);
         model.addAttribute("actionTypes", ActionType.values());
-//        model.addAttribute("teams", teamService.findByUser(user));
         model.addAttribute("teams", match.getTeams());
         model.addAttribute("players", playerService.findByUser(user));
 
-//        model.addAttribute("teams", match.getTeams());
 
         // We'll populate players based on team selection via AJAX in the frontend
-
         model.addAttribute("user", user);
         model.addAttribute("roles", getUserAuthorities());
 
@@ -174,10 +171,13 @@ public class StatisticsController {
                                   @RequestParam(value = "endX", required = false) Double endX,
                                   @RequestParam(value = "endY", required = false) Double endY,
                                   @RequestParam(value = "color", required = false) String color,
+                                  @RequestParam(value = "actionState") Statistic.ActionState actionState,
                                   RedirectAttributes redirectAttributes,
                                   Model model) {
 
         User user = getCurrentUser();
+
+
 
         if (bindingResult.hasErrors()) {
             logger.error("Form has validation errors: {}", bindingResult.getAllErrors());
@@ -203,6 +203,7 @@ public class StatisticsController {
 
             // Set action type
             statistic.setActionType(actionType);
+            statistic.setActionState(actionState);
 
             // Set coordinates
             statistic.setStartX(startX);

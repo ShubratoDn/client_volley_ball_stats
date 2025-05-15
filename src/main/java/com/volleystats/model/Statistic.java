@@ -19,6 +19,9 @@ public class Statistic {
     @NotNull
     private ActionType actionType;
 
+    @Enumerated(EnumType.STRING)
+    private ActionState actionState;
+
     // Point coordinates
     private double startX;
     private double startY;
@@ -60,6 +63,23 @@ public class Statistic {
         ATTACK,
         RECEPTION,
         SERVE
+    }
+
+    public enum ActionState {
+        // ATTACK
+        KILL,
+        SHOT,
+        ATTACK_ERROR,
+
+        // RECEPTION
+        RECEPTION_ERROR,
+        REGULAR_RECEPTION,
+
+        // SERVE
+        ACE,
+        SERVE_ERROR,
+        BREAK_POINT,
+        FREEBALL
     }
 
     // Getters and Setters
