@@ -768,6 +768,8 @@
                 const x = ((e.clientX - rect.left) / courtWidth) * 100;
                 const y = ((e.clientY - rect.top) / courtHeight) * 100;
 
+                resetCourt();
+
                 // For attack, we need start and end positions, for others just a single point
                 if (selectedActionType === "ATTACK") {
                     if (!hasStartPoint) {
