@@ -455,13 +455,10 @@
         }
 
         #videoPanel{
-            /*position: absolute;*/
             z-index: 999;
-            /*left: 104%;*/
-            /*top: 50%;*/
-            /*transform: translate(-0%, -50%);*/
-            width: 40%;
-            margin: 0 auto;
+            max-width: 400px;
+            height: auto;
+            margin: 0px 100px;
         }
 
         #videoPanel video{
@@ -538,6 +535,122 @@
         .state-options label{
             font-weight: bold;
             margin-right: 25px;
+        }
+    </style>
+
+    <style>
+        #courtDiagramContainer{
+            margin-left: -11%;
+        }
+        .court-diagram {
+            position: relative;
+            width: 300px;
+            height: 150px;
+            border: 1px solid rgba(143, 141, 141, 0.82);
+            margin: 20px auto;
+            background-color: #f8f9fa;
+        }
+
+        .court-center-line {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            height: 100%;
+            width: 2px;
+            background-color: #333;
+        }
+
+        .marker {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            margin-left: -6px;
+            margin-top: -6px;
+            border-radius: 50%;
+            z-index: 5;
+        }
+
+        .attack-marker {
+            background-color: #dc3545;
+        }
+
+        .reception-marker {
+            background-color: #198754;
+        }
+
+        .serve-marker {
+            background-color: #0d6efd;
+        }
+
+        .trajectory {
+            position: absolute;
+            height: 2px;
+            background-color: #555;
+            transform-origin: 0 0;
+            z-index: 4;
+        }
+
+        .filter-btn {
+            margin-right: 5px;
+            margin-bottom: 10px;
+        }
+
+        .filter-btn.active {
+            font-weight: bold;
+        }
+
+        .statistic-table tr:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+        }
+
+        .action-type-badge-ATTACK {
+            background-color: #dc3545;
+        }
+
+        .action-type-badge-RECEPTION {
+            background-color: #198754;
+        }
+
+        .action-type-badge-SERVE {
+            background-color: #0d6efd;
+        }
+
+        .quality-bar {
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .quality-value {
+            height: 100%;
+            background-color: #0d6efd;
+        }
+
+        .stat-card {
+            border-radius: 10px;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card-attack {
+            background-color: rgba(220, 53, 69, 0.1);
+            border-left: 4px solid #dc3545;
+        }
+
+        .stat-card-reception {
+            background-color: rgba(25, 135, 84, 0.1);
+            border-left: 4px solid #198754;
+        }
+
+        .stat-card-serve {
+            background-color: rgba(13, 110, 253, 0.1);
+            border-left: 4px solid #0d6efd;
         }
     </style>
 </head>
@@ -731,13 +844,23 @@
                             <i class="fas fa-info-circle me-1"></i>
                             Click on the court to place a point for Serve/Reception or click and drag for Attack.
                         </p>
-                        <!-- Video panel (initially hidden) -->
-                        <div id="videoPanel" style="display: none; margin-top: 20px;">
-                            <video id="matchVideo"  controls>
-                                Your browser does not support the video tag.
-                            </video>
-                            <br />
-                            <button id="closeVideoBtn" type="button" class="btn btn-danger mt-2">Close Video</button>
+                        <div style="display: flex; justify-content:center; align-items: flex-end; margin-bottom: 15px">
+                            <!-- Court Visualization -->
+                            <div id="courtDiagramContainer">
+                                <div class="court-diagram" id="courtDiagram">
+                                    <div class="court-center-line"></div>
+                                    <!-- Markers will be added dynamically by JavaScript -->
+                                </div>
+                            </div>
+
+                            <!-- Video panel (initially hidden) -->
+                            <div id="videoPanel" style="display: none;">
+                                <video id="matchVideo"  controls>
+                                    Your browser does not support the video tag.
+                                </video>
+                                <br />
+                                <button id="closeVideoBtn" type="button" class="btn btn-danger mt-2">Close Video</button>
+                            </div>
                         </div>
 
                         <div style="display: flex; justify-content: center; align-items: center">
@@ -751,6 +874,8 @@
                             </div>
                             <button type="button" class="btn-success" id="confirm-selection">Confirm Slection</button>
                         </div>
+
+
                         <div class="coordinate-display" id="coordinateDisplay">
                             <i class="fas fa-mouse-pointer me-1"></i>
                             Click on the court to set coordinates
@@ -781,6 +906,7 @@
                 const videoURL = URL.createObjectURL(file);
                 video.src = videoURL;
                 videoPanel.style.display = 'block';
+                document.getElementById("courtDiagramContainer").style.marginLeft= "-1%";
                 video.load();
                 video.play();
             }
@@ -791,6 +917,7 @@
             video.src = '';
             videoPanel.style.display = 'none';
             input.value = ''; // Clear the file input
+            document.getElementById("courtDiagramContainer").style.marginLeft= "-11%";
         });
     </script>
 
@@ -822,6 +949,7 @@
             let isDrawingAttack = false;
             let hasStartPoint = false;
             let hasEndPoint = false;
+            let currentSelection = null;
 
             // Court dimensions
             const courtWidth = courtContainer.offsetWidth;
@@ -840,7 +968,6 @@
                 endPointElement.style.backgroundColor = color;
                 lineElement.style.backgroundColor = color;
             });
-
 
             // State container elements
             const attackStates = document.getElementById('attackStates');
@@ -867,8 +994,8 @@
                     selectedActionType = this.dataset.value;
                     actionTypeInput.value = selectedActionType;
 
-                    // Reset the court
-                    resetCourt();
+                    // Reset the court visualization (but keep any existing selections)
+                    resetCourtVisualization();
 
                     // Set color logic
                     let defaultColor = "#FF0000";
@@ -906,14 +1033,73 @@
                         const select = activeDiv.querySelector('select[name="actionState"]');
                         if (select) select.disabled = false;
                     }
-
-                    updateSubmitButtonState();
                 });
             });
 
-            confirmSelectionBtn.addEventListener('click', function (e){
+            // Add this at the top with your other variables
+            let allSelections = [];
+            let selectionIdCounter = 1;
+
+            // Modify your confirmSelectionBtn click handler to store the selection
+            confirmSelectionBtn.addEventListener('click', function (e) {
+
+                if (!selectedActionType) {
+                    alert("Please select an action type first.");
+                    return;
+                }
+
+                if (!hasStartPoint) {
+                    alert("Please select at least one point on the court.");
+                    return;
+                }
+
+                if (selectedActionType === "ATTACK" && !hasEndPoint) {
+                    alert("For attack, please select both start and end points.");
+                    return;
+                }
+
+                // Get the current state value
+                const stateSelect = document.querySelector(`#${selectedActionType.toLowerCase()}States select[name="actionState"]`);
+                const actionState = stateSelect ? stateSelect.value : null;
+
+                // Create the selection object
+                const selection = {
+                    id: selectionIdCounter++,
+                    actionType: selectedActionType,
+                    actionState: actionState,
+                    startX: parseFloat(startXInput.value),
+                    startY: parseFloat(startYInput.value),
+                    endX: selectedActionType === "ATTACK" ? parseFloat(endXInput.value) : parseFloat(startXInput.value),
+                    endY: selectedActionType === "ATTACK" ? parseFloat(endYInput.value) : parseFloat(startYInput.value),
+                    quality: 3, // default quality
+                    color: colorInput.value,
+                    teamId: teamSelect.value,
+                    playerId: playerSelect.value
+                };
+
+                // Add to all selections
+                allSelections.push(selection);
+
+                // Create a visual representation of the selection on the court
+                createPersistentSelection(selection);
+
+                // Reset for next selection
+                resetCourtVisualization();
                 resetActionBtns();
+
+                updateSubmitButtonState();
+                // console.log(allSelections)
+
+                drawVisual();
             });
+
+            // Add a function to get all selections as JSON
+            function getAllSelectionsJson() {
+                return {
+                    selections: allSelections
+                };
+            }
+
 
             // Court click handling
             courtContainer.addEventListener('mousedown', function(e) {
@@ -927,7 +1113,7 @@
                 const x = ((e.clientX - rect.left) / courtWidth) * 100;
                 const y = ((e.clientY - rect.top) / courtHeight) * 100;
 
-                resetCourt();
+                resetCourtVisualization();
 
                 // For attack, we need start and end positions, for others just a single point
                 if (selectedActionType === "ATTACK") {
@@ -1003,17 +1189,15 @@
                     isDrawingAttack = false;
 
                     coordinateDisplay.innerHTML = `
-                        <i class="fas fa-map-pin me-1"></i>Start: (${parseFloat(startXInput.value).toFixed(1)}%, ${parseFloat(startYInput.value).toFixed(1)}%)
-                        <i class="fas fa-arrow-right mx-2"></i>
-                        End: (${x.toFixed(1)}%, ${y.toFixed(1)}%)
-                    `;
-
-                    updateSubmitButtonState();
+                <i class="fas fa-map-pin me-1"></i>Start: (${parseFloat(startXInput.value).toFixed(1)}%, ${parseFloat(startYInput.value).toFixed(1)}%)
+                <i class="fas fa-arrow-right mx-2"></i>
+                End: (${x.toFixed(1)}%, ${y.toFixed(1)}%)
+            `;
                 }
             });
 
-            // Reset court when selecting a new action type
-            function resetCourt() {
+            // Reset court visualization (without clearing stored selections)
+            function resetCourtVisualization() {
                 startPointElement.style.display = 'none';
                 lineElement.style.display = 'none';
                 endPointElement.style.display = 'none';
@@ -1028,15 +1212,14 @@
                 isDrawingAttack = false;
             }
 
-
-            function resetActionBtns(){
+            function resetActionBtns() {
                 // Remove active class from all buttons
                 actionTypeBtns.forEach(b => b.classList.remove('active'));
                 // Set the action type value
                 selectedActionType = null;
                 actionTypeInput.value = selectedActionType;
-                // Reset the court
-                resetCourt();
+                // Reset the court visualization
+                resetCourtVisualization();
                 coordinateDisplay.innerHTML = '<i class="fas fa-info-circle me-1"></i>Click on the court to set coordinates';
                 // Show the correct state section and disable others
                 Object.values(stateContainers).forEach(div => {
@@ -1044,18 +1227,72 @@
                     const select = div.querySelector('select[name="actionState"]');
                     if (select) select.disabled = true;
                 });
-                updateSubmitButtonState();
             }
 
+            function createPersistentSelection(selection) {
+                const rect = courtContainer.getBoundingClientRect();
 
+                if (selection.actionType === "ATTACK") {
+                    // Create line element
+                    const line = document.createElement('div');
+                    line.className = 'statistic-line persistent';
+                    line.style.backgroundColor = selection.color;
+
+                    // Calculate line properties
+                    const startX = selection.startX * courtWidth / 100;
+                    const startY = selection.startY * courtHeight / 100;
+                    const endX = selection.endX * courtWidth / 100;
+                    const endY = selection.endY * courtHeight / 100;
+
+                    const dx = endX - startX;
+                    const dy = endY - startY;
+                    const length = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+                    // Set line properties
+                    line.style.width = `${length}px`;
+                    line.style.left = `${startX}px`;
+                    line.style.top = `${startY}px`;
+                    line.style.transform = `rotate(${angle}deg)`;
+
+                    // Create start and end points
+                    const startPoint = document.createElement('div');
+                    startPoint.className = 'statistic-point persistent';
+                    startPoint.style.backgroundColor = selection.color;
+                    startPoint.style.left = `${startX}px`;
+                    startPoint.style.top = `${startY}px`;
+
+                    const endPoint = document.createElement('div');
+                    endPoint.className = 'statistic-point persistent';
+                    endPoint.style.backgroundColor = selection.color;
+                    endPoint.style.left = `${endX}px`;
+                    endPoint.style.top = `${endY}px`;
+
+                    // Add to court container
+                    courtContainer.appendChild(startPoint);
+                    courtContainer.appendChild(line);
+                    courtContainer.appendChild(endPoint);
+                } else {
+                    // Create single point for reception/serve
+                    const point = document.createElement('div');
+                    point.className = 'statistic-point persistent';
+                    point.style.backgroundColor = selection.color;
+                    point.style.left = `${selection.startX * courtWidth / 100}px`;
+                    point.style.top = `${selection.startY * courtHeight / 100}px`;
+
+                    courtContainer.appendChild(point);
+                }
+            }
 
             // Update submit button state
             function updateSubmitButtonState() {
                 const hasTeam = teamSelect.value !== '';
                 const hasPlayer = playerSelect.value !== '';
-                const hasActionType = selectedActionType !== null;
+                // const hasActionType = selectedActionType !== null;
 
-                let canSubmit = hasTeam && hasPlayer && hasActionType && hasStartPoint;
+                let canSubmit = hasTeam && hasPlayer && (allSelections && allSelections.length !== 0);
+
+                console.log(allSelections)
 
                 // For attack, we need both start and end points
                 if (selectedActionType === 'ATTACK') {
@@ -1124,11 +1361,103 @@
                 // If there's a significant change in dimensions
                 if (Math.abs(newCourtWidth - courtWidth) > 10 || Math.abs(newCourtHeight - courtHeight) > 10) {
                     // Reset the court to avoid position issues
-                    resetCourt();
+                    resetCourtVisualization();
                     coordinateDisplay.innerHTML = '<i class="fas fa-mouse-pointer me-1"></i>Click on the court to set coordinates';
                 }
             });
-        });
+
+
+
+            //draw visuals
+
+            let statistics = [];
+            // Get the court diagram
+            const court = document.getElementById('courtDiagram');
+
+            const courtVisualsWidth = court.offsetWidth;
+            const courtVisualsHeight = court.offsetHeight;
+
+
+            function drawVisual(){
+                statistics =[];
+                allSelections.forEach(item => {
+                    let stat = {
+                        id: item.id,
+                        actionType: item.actionType,
+                        actionState: item.actionState,
+                        startX: normalize(item.startX),
+                        startY: normalize(item.startY),
+                        quality: 3 // default quality
+                    };
+
+                    if (item.endX !== null && item.endY !== null) {
+                        stat.endX = normalize(item.endX);
+                        stat.endY = normalize(item.endY);
+                    }
+                    statistics.push(stat);
+                });
+
+
+                // console.log("Statistics are ... ");
+                // console.log(statistics)
+                // console.log("----------------")
+
+
+                // Add markers and trajectories for each statistic
+                statistics.forEach(stat => {
+                    // Create and position start marker
+                    const startMarker = document.createElement('div');
+                    startMarker.classList.add('marker');
+
+                    // Set marker color based on action type
+                    if (stat.actionType === 'ATTACK') {
+                        startMarker.classList.add('attack-marker');
+                    } else if (stat.actionType === 'RECEPTION') {
+                        startMarker.classList.add('reception-marker');
+                    } else if (stat.actionType === 'SERVE') {
+                        startMarker.classList.add('serve-marker');
+                    }
+
+                    // Position the marker
+                    startMarker.style.left = (stat.startX * courtVisualsWidth) + 'px';
+                    startMarker.style.top = (stat.startY * courtVisualsHeight) + 'px';
+                    startMarker.setAttribute('title', 'ID: ' + stat.id + ' - ' + stat.actionType + (stat.actionState != null ? ' ( ' + stat.actionState + ' )' : ''));
+                    court.appendChild(startMarker);
+
+                    // For attacks, add end marker and trajectory
+                    if (stat.actionType === 'ATTACK' && stat.endX && stat.endY) {
+                        // Create and position end marker
+                        const endMarker = document.createElement('div');
+                        endMarker.classList.add('marker', 'attack-marker');
+                        endMarker.style.opacity = '0.7';
+                        endMarker.style.left = (stat.endX * courtVisualsWidth) + 'px';
+                        endMarker.style.top = (stat.endY * courtVisualsHeight) + 'px';
+                        court.appendChild(endMarker);
+
+                        // Create and position trajectory line
+                        const trajectory = document.createElement('div');
+                        trajectory.classList.add('trajectory');
+
+                        const dx = stat.endX * courtVisualsWidth - stat.startX * courtVisualsWidth;
+                        const dy = stat.endY * courtVisualsHeight - stat.startY * courtVisualsHeight;
+                        const length = Math.sqrt(dx * dx + dy * dy);
+                        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+                        trajectory.style.width = length + 'px';
+                        trajectory.style.left = (stat.startX * courtVisualsWidth) + 'px';
+                        trajectory.style.top = (stat.startY * courtVisualsHeight) + 'px';
+                        trajectory.style.transform = 'rotate(' + angle + 'deg)';
+
+                        court.appendChild(trajectory);
+                    }
+                });
+            }
+
+            function normalize(value, max = 100) {
+                return +(value / max).toFixed(3);
+            }
+
+        })
     </script>
 </div>
 
