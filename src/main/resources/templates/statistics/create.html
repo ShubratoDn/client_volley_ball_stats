@@ -740,13 +740,16 @@
                             <button id="closeVideoBtn" type="button" class="btn btn-danger mt-2">Close Video</button>
                         </div>
 
-                        <div class="court-container" id="courtVisualization">
-                            <div class="net"></div>
-                            <div class="court-side left">Team A</div>
-                            <div class="court-side right">Team B</div>
-                            <div id="startPoint" class="statistic-point"></div>
-                            <div id="statisticLine" class="statistic-line"></div>
-                            <div id="endPoint" class="statistic-point"></div>
+                        <div style="display: flex; justify-content: center; align-items: center">
+                            <div class="court-container" id="courtVisualization">
+                                <div class="net"></div>
+                                <div class="court-side left">Team A</div>
+                                <div class="court-side right">Team B</div>
+                                <div id="startPoint" class="statistic-point"></div>
+                                <div id="statisticLine" class="statistic-line"></div>
+                                <div id="endPoint" class="statistic-point"></div>
+                            </div>
+                            <button type="button" class="btn-success" id="confirm-selection">Confirm Slection</button>
                         </div>
                         <div class="coordinate-display" id="coordinateDisplay">
                             <i class="fas fa-mouse-pointer me-1"></i>
@@ -800,6 +803,7 @@
             const lineElement = document.getElementById('statisticLine');
             const coordinateDisplay = document.getElementById('coordinateDisplay');
             const colorPreview = document.getElementById('colorPreview');
+            const confirmSelectionBtn = document.getElementById('confirm-selection');
 
             // Form elements
             const submitBtn = document.getElementById('submitBtn');
@@ -907,6 +911,9 @@
                 });
             });
 
+            confirmSelectionBtn.addEventListener('click', function (e){
+                resetActionBtns();
+            });
 
             // Court click handling
             courtContainer.addEventListener('mousedown', function(e) {
@@ -1020,6 +1027,27 @@
                 hasEndPoint = false;
                 isDrawingAttack = false;
             }
+
+
+            function resetActionBtns(){
+                // Remove active class from all buttons
+                actionTypeBtns.forEach(b => b.classList.remove('active'));
+                // Set the action type value
+                selectedActionType = null;
+                actionTypeInput.value = selectedActionType;
+                // Reset the court
+                resetCourt();
+                coordinateDisplay.innerHTML = '<i class="fas fa-info-circle me-1"></i>Click on the court to set coordinates';
+                // Show the correct state section and disable others
+                Object.values(stateContainers).forEach(div => {
+                    div.style.display = 'none';
+                    const select = div.querySelector('select[name="actionState"]');
+                    if (select) select.disabled = true;
+                });
+                updateSubmitButtonState();
+            }
+
+
 
             // Update submit button state
             function updateSubmitButtonState() {
