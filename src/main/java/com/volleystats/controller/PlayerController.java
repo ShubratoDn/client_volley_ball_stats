@@ -26,6 +26,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/players")
@@ -158,8 +159,7 @@ public class PlayerController {
         model.addAttribute("attackCount", attackCount);
         model.addAttribute("receptionCount", receptionCount);
         model.addAttribute("serveCount", serveCount);
-
-
+                
         return "players/view";
     }
 

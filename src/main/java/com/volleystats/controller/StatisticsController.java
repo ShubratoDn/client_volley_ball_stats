@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.volleystats.dto.ActionChartDTO;
+import com.volleystats.dto.ActionTypeStateMapper;
 import com.volleystats.model.Match;
 import com.volleystats.model.Player;
 import com.volleystats.model.Statistic;
@@ -22,6 +24,7 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -34,6 +37,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/statistics")
@@ -411,5 +416,55 @@ public class StatisticsController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         return userDetails.getAuthorities();
+    }
+
+
+    @ResponseBody
+    @GetMapping("/chart/{playerId}/{actionType}")
+    public ResponseEntity<ActionChartDTO> getChartData(
+            @PathVariable Long playerId,
+            @PathVariable String actionType
+    ) {
+        Statistic.ActionType type = Statistic.ActionType.valueOf(actionType.toUpperCase());
+
+        List<Statistic> statistics = statisticService.findByPlayerIdAndActionType(playerId, type);
+
+        // Determine valid ActionStates for the ActionType
+        List<Statistic.ActionState> validStates = getStatesForActionType(type);
+
+        Map<Statistic.ActionState, Long> countMap = statistics.stream()
+                .filter(stat -> stat.getActionState() != null)
+                .collect(Collectors.groupingBy(Statistic::getActionState, Collectors.counting()));
+
+        List<String> stateNames = new ArrayList<>();
+        List<Integer> counts = new ArrayList<>();
+
+        for (Statistic.ActionState state : validStates) {
+            stateNames.add(state.name());
+            counts.add(countMap.getOrDefault(state, 0L).intValue());
+        }
+
+        ActionChartDTO dto = new ActionChartDTO(type.name(), stateNames, counts);
+        return ResponseEntity.ok(dto);
+    }
+
+    private List<Statistic.ActionState> getStatesForActionType(Statistic.ActionType type) {
+        return switch (type) {
+            case ATTACK -> List.of(
+                    Statistic.ActionState.KILL,
+                    Statistic.ActionState.SHOT,
+                    Statistic.ActionState.ATTACK_ERROR
+            );
+            case RECEPTION -> List.of(
+                    Statistic.ActionState.RECEPTION_ERROR,
+                    Statistic.ActionState.REGULAR_RECEPTION
+            );
+            case SERVE -> List.of(
+                    Statistic.ActionState.ACE,
+                    Statistic.ActionState.SERVE_ERROR,
+                    Statistic.ActionState.BREAK_POINT,
+                    Statistic.ActionState.FREEBALL
+            );
+        };
     }
 }
