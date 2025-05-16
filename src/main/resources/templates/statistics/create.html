@@ -1292,7 +1292,7 @@
 
                 let canSubmit = hasTeam && hasPlayer && (allSelections && allSelections.length !== 0);
 
-                console.log(allSelections)
+                // console.log(allSelections)
 
                 // For attack, we need both start and end points
                 if (selectedActionType === 'ATTACK') {
@@ -1456,6 +1456,38 @@
             function normalize(value, max = 100) {
                 return +(value / max).toFixed(3);
             }
+
+
+
+
+            // Add this to your existing code
+            document.getElementById('createStatisticForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                // Get all selections
+                const selectionsJson = getAllSelectionsJson();
+
+                // Create hidden inputs for each selection
+                selectionsJson.selections.forEach((selection, index) => {
+                    // Create a container for each selection
+                    const container = document.createElement('div');
+
+                    // Add hidden inputs for each property
+                    Object.keys(selection).forEach(key => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = `selections[${index}].${key}`;
+                        input.value = selection[key];
+                        container.appendChild(input);
+                    });
+
+                    // Add to form
+                    this.appendChild(container);
+                });
+
+                // Submit the form
+                this.submit();
+            });
 
         })
     </script>

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.volleystats.dto.ActionChartDTO;
 import com.volleystats.dto.ActionTypeStateMapper;
+import com.volleystats.dto.StatisticSelection;
 import com.volleystats.model.Match;
 import com.volleystats.model.Player;
 import com.volleystats.model.Statistic;
@@ -166,23 +167,15 @@ public class StatisticsController {
      * Create a new statistic
      */
     @PostMapping("/create")
-    public String createStatistic(@Valid @ModelAttribute("statistic") Statistic statistic,
+    public String createStatistic(@Valid @ModelAttribute("statistic") Statistic statisticPayload,
                                   BindingResult bindingResult,
                                   @RequestParam("matchId") Long matchId,
                                   @RequestParam("teamId") Long teamId,
                                   @RequestParam("playerId") Long playerId,
-                                  @RequestParam("actionType") ActionType actionType,
-                                  @RequestParam("startX") double startX,
-                                  @RequestParam("startY") double startY,
-                                  @RequestParam(value = "endX", required = false) Double endX,
-                                  @RequestParam(value = "endY", required = false) Double endY,
-                                  @RequestParam(value = "color", required = false) String color,
-                                  @RequestParam(value = "actionState") Statistic.ActionState actionState,
                                   RedirectAttributes redirectAttributes,
                                   Model model) {
 
         User user = getCurrentUser();
-
 
 
         if (bindingResult.hasErrors()) {
@@ -197,59 +190,81 @@ public class StatisticsController {
             model.addAttribute("players", playerService.findByUser(user));
             model.addAttribute("user", user);
             model.addAttribute("roles", getUserAuthorities());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error creating statistic");
 
             return "statistics/create";
         }
 
         try {
-            // Set user and timestamps
-            statistic.setCreatedBy(user);
-            statistic.setCreatedAt(LocalDateTime.now());
-            statistic.setUpdatedAt(LocalDateTime.now());
 
-            // Set action type
-            statistic.setActionType(actionType);
-            statistic.setActionState(actionState);
+            for (StatisticSelection statisticSelection: statisticPayload.getSelections()){
 
-            // Set coordinates
-            statistic.setStartX(startX);
-            statistic.setStartY(startY);
 
-            // For attacks, we need end coordinates
-            if (actionType == ActionType.ATTACK) {
-                if (endX == null || endY == null) {
-                    throw new IllegalArgumentException("Attack statistics require end coordinates");
+                Statistic statistic = new Statistic();
+
+
+                ActionType actionType = ActionType.valueOf(statisticSelection.getActionType());
+                Statistic.ActionState actionState = Statistic.ActionState.valueOf(statisticSelection.getActionState());
+
+                double startX = statisticSelection.getStartX();
+                double startY = statisticSelection.getStartY();
+
+                Double endX = statisticSelection.getEndX();
+                Double endY = statisticSelection.getEndY();
+
+                String color = statisticSelection.getColor();
+
+                // Set user and timestamps
+                statistic.setCreatedBy(user);
+                statistic.setCreatedAt(LocalDateTime.now());
+                statistic.setUpdatedAt(LocalDateTime.now());
+
+                // Set action type
+                statistic.setActionType(actionType);
+                statistic.setActionState(actionState);
+
+                // Set coordinates
+                statistic.setStartX(startX);
+                statistic.setStartY(startY);
+
+                // For attacks, we need end coordinates
+                if (actionType == ActionType.ATTACK) {
+                    if (endX == null || endY == null) {
+                        throw new IllegalArgumentException("Attack statistics require end coordinates");
+                    }
+                    statistic.setEndX(endX);
+                    statistic.setEndY(endY);
+                } else {
+                    // For other action types, make sure end coordinates are null
+                    statistic.setEndX(null);
+                    statistic.setEndY(null);
                 }
-                statistic.setEndX(endX);
-                statistic.setEndY(endY);
-            } else {
-                // For other action types, make sure end coordinates are null
-                statistic.setEndX(null);
-                statistic.setEndY(null);
+
+                // Set color (use default if not provided)
+                if (color == null || color.isEmpty()) {
+                    color = statisticService.getDefaultColorForAction(actionType);
+                }
+                statistic.setColor(color);
+
+                // Set related entities
+                Match match = matchService.findById(matchId)
+                        .orElseThrow(() -> new RuntimeException("Match not found"));
+                statistic.setMatch(match);
+
+                Team team = teamService.findById(teamId)
+                        .orElseThrow(() -> new RuntimeException("Team not found"));
+                statistic.setTeam(team);
+
+                Player player = playerService.findById(playerId)
+                        .orElseThrow(() -> new RuntimeException("Player not found"));
+                statistic.setPlayer(player);
+
+                // Save the statistic
+                Statistic savedStatistic = statisticService.createStatistic(statistic);
+                logger.debug("Statistic saved with ID: {}", savedStatistic.getId());
+
             }
 
-            // Set color (use default if not provided)
-            if (color == null || color.isEmpty()) {
-                color = statisticService.getDefaultColorForAction(actionType);
-            }
-            statistic.setColor(color);
-
-            // Set related entities
-            Match match = matchService.findById(matchId)
-                    .orElseThrow(() -> new RuntimeException("Match not found"));
-            statistic.setMatch(match);
-
-            Team team = teamService.findById(teamId)
-                    .orElseThrow(() -> new RuntimeException("Team not found"));
-            statistic.setTeam(team);
-
-            Player player = playerService.findById(playerId)
-                    .orElseThrow(() -> new RuntimeException("Player not found"));
-            statistic.setPlayer(player);
-
-            // Save the statistic
-            Statistic savedStatistic = statisticService.createStatistic(statistic);
-            logger.debug("Statistic saved with ID: {}", savedStatistic.getId());
 
             redirectAttributes.addFlashAttribute("successMessage", "Statistic added successfully!");
             return "redirect:/statistics/match/" + matchId;
@@ -434,7 +449,7 @@ public class StatisticsController {
         }else if (field.equalsIgnoreCase("MATCH")){
             statistics = statisticService.findByMatchIdAndActionType(id, type);
         }
-        
+
 
         // Determine valid ActionStates for the ActionType
         List<Statistic.ActionState> validStates = getStatesForActionType(type);

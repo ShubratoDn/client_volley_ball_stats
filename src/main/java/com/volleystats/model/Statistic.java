@@ -1,10 +1,12 @@
 package com.volleystats.model;
 
+import com.volleystats.dto.StatisticSelection;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "statistics")
@@ -16,7 +18,6 @@ public class Statistic {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @NotNull
     private ActionType actionType;
 
     @Enumerated(EnumType.STRING)
@@ -81,6 +82,12 @@ public class Statistic {
         BREAK_POINT,
         FREEBALL
     }
+
+
+
+    @Transient
+    private List<StatisticSelection> selections;
+
 
     // Getters and Setters
 
