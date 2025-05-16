@@ -469,6 +469,61 @@ public class StatisticsController {
             counts.add(countMap.getOrDefault(state, 0L).intValue());
         }
 
+
+        if (type == ActionType.ATTACK) {
+            stateNames.add("Attack Efficiency (%)");
+
+            long kills = countMap.getOrDefault(Statistic.ActionState.KILL, 0L);
+            long attackErrors = countMap.getOrDefault(Statistic.ActionState.ATTACK_ERROR, 0L);
+            long shots = countMap.getOrDefault(Statistic.ActionState.SHOT, 0L);
+
+            long totalAttacks = kills + attackErrors + shots;
+
+            double efficiency = totalAttacks > 0 ? ((double) (kills - attackErrors) / totalAttacks) : 0.0;
+            counts.add((int) Math.round(efficiency * 100)); // e.g., % value for graph
+        }
+
+        if (type == ActionType.RECEPTION) {
+            stateNames.add("Reception Efficiency (%)");
+
+            long goodReceptions = countMap.getOrDefault(Statistic.ActionState.REGULAR_RECEPTION, 0L);
+            long receptionErrors = countMap.getOrDefault(Statistic.ActionState.RECEPTION_ERROR, 0L);
+
+            long totalReceptions = goodReceptions + receptionErrors;
+
+            double efficiency = totalReceptions > 0 ? ((double) goodReceptions / totalReceptions) : 0.0;
+            counts.add((int) Math.round(efficiency * 100));
+        }
+
+        if (type == ActionType.SERVE) {
+            stateNames.add("Serve Efficiency (%)");
+
+            long aces = countMap.getOrDefault(Statistic.ActionState.ACE, 0L);
+            long serveErrors = countMap.getOrDefault(Statistic.ActionState.SERVE_ERROR, 0L);
+            long freeballs = countMap.getOrDefault(Statistic.ActionState.FREEBALL, 0L);
+            long breakPoints = countMap.getOrDefault(Statistic.ActionState.BREAK_POINT, 0L);
+            long outOfSystem = countMap.getOrDefault(Statistic.ActionState.OUT_OF_SYSTEM_PASS, 0L);
+
+            long totalServes = aces + serveErrors + freeballs + breakPoints + outOfSystem;
+
+            // Serve Efficiency
+            double serveEfficiency = totalServes > 0 ? ((double)(aces - serveErrors) / totalServes) : 0.0;
+            counts.add((int)Math.round(serveEfficiency * 100));
+            stateNames.add("KO%");
+
+            // KO% = (Ace + OutOfSystemPass + Freeball) / Serve Attempts
+            double koPercentage = totalServes > 0 ? ((double)(aces + outOfSystem + freeballs) / totalServes) : 0.0;
+            counts.add((int)Math.round(koPercentage * 100));
+
+            // Error% = Serve Errors / Serve Attempts
+            stateNames.add("Error%");
+            double errorPercentage = totalServes > 0 ? ((double)serveErrors / totalServes) : 0.0;
+            counts.add((int)Math.round(errorPercentage * 100));
+        }
+
+
+
+
         ActionChartDTO dto = new ActionChartDTO(type.name(), stateNames, counts);
         return ResponseEntity.ok(dto);
     }
@@ -488,7 +543,8 @@ public class StatisticsController {
                     Statistic.ActionState.ACE,
                     Statistic.ActionState.SERVE_ERROR,
                     Statistic.ActionState.BREAK_POINT,
-                    Statistic.ActionState.FREEBALL
+                    Statistic.ActionState.FREEBALL,
+                    Statistic.ActionState.OUT_OF_SYSTEM_PASS
             );
         };
     }

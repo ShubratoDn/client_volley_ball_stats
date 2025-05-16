@@ -721,14 +721,14 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="teamId" class="form-label">Team:</label>
-                                <select class="form-select" id="teamId" name="teamId" required>
+                                <select class="form-select" id="teamId" name="teamId" >
                                     <option value="">Select Team</option>
                                     <option th:each="team : ${teams}" th:value="${team.id}" th:text="${team.name}"></option>
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="playerId" class="form-label">Player:</label>
-                                <select class="form-select" id="playerId" name="playerId" required disabled>
+                                <select class="form-select" id="playerId" name="playerId"  disabled>
                                     <option value="">Select Player</option>
                                 </select>
                             </div>
@@ -792,6 +792,7 @@
                                         <option value="SERVE_ERROR">Error</option>
                                         <option value="BREAK_POINT">Break Point</option>
                                         <option value="FREEBALL">Freeball</option>
+                                        <option value="OUT_OF_SYSTEM_PASS">OUT_OF_SYSTEM_PASS</option>
                                     </select>
                                 </div>
 
@@ -1094,7 +1095,7 @@
 
                 // Reset for next selection
                 resetCourtVisualization();
-                resetActionBtns();
+                // resetActionBtns();
 
                 updateSubmitButtonState();
                 // console.log(allSelections)
@@ -1112,8 +1113,12 @@
 
             // Court click handling
             courtContainer.addEventListener('mousedown', function(e) {
-                if (!selectedActionType) {
-                    alert("Please select an action type first.");
+
+                const hasTeam = teamSelect.value !== '';
+                const hasPlayer = playerSelect.value !== '';
+
+                if (!selectedActionType || !hasPlayer || !hasTeam) {
+                    alert("Please select an action type, player and team.");
                     return;
                 }
 
@@ -1152,7 +1157,7 @@
                     coordinateDisplay.innerHTML = `<i class="fas fa-map-pin me-1"></i>Position: (${x.toFixed(1)}%, ${y.toFixed(1)}%)`;
                 }
 
-                updateSubmitButtonState();
+                // updateSubmitButtonState();
             });
 
             // For attack, handle mousemove to draw line
@@ -1299,14 +1304,15 @@
                 const hasPlayer = playerSelect.value !== '';
                 // const hasActionType = selectedActionType !== null;
 
-                let canSubmit = hasTeam && hasPlayer && (allSelections && allSelections.length !== 0);
+                // let canSubmit = hasTeam && hasPlayer && (allSelections && allSelections.length !== 0);
+                let canSubmit = (allSelections && allSelections.length !== 0);
 
                 // console.log(allSelections)
 
                 // For attack, we need both start and end points
-                if (selectedActionType === 'ATTACK') {
-                    canSubmit = canSubmit && hasEndPoint;
-                }
+                // if (selectedActionType === 'ATTACK') {
+                //     canSubmit = canSubmit && hasEndPoint;
+                // }
 
                 submitBtn.disabled = !canSubmit;
 

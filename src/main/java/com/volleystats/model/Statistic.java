@@ -80,7 +80,8 @@ public class Statistic {
         ACE,
         SERVE_ERROR,
         BREAK_POINT,
-        FREEBALL
+        FREEBALL,
+        OUT_OF_SYSTEM_PASS // ✅ New addition
     }
 
 
