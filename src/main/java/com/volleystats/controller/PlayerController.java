@@ -1,8 +1,15 @@
 package com.volleystats.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.volleystats.model.Match;
 import com.volleystats.model.Player;
+import com.volleystats.model.Statistic;
 import com.volleystats.model.User;
 import com.volleystats.service.PlayerService;
+import com.volleystats.service.StatisticService;
 import com.volleystats.service.UserService;
 import jakarta.validation.Valid;
 
@@ -17,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -28,6 +36,9 @@ public class PlayerController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private StatisticService statisticService;
 
     @GetMapping
     public String listPlayers(Model model) {
@@ -86,7 +97,9 @@ public class PlayerController {
     }
 
     @GetMapping("/{id}")
-    public String viewPlayer(@PathVariable("id") Long id, Model model) {
+    public String viewPlayer(@PathVariable("id") Long id,
+                             @RequestParam(value = "actionType", required = false, defaultValue = "") Statistic.ActionType actionType,
+                             Model model) throws JsonProcessingException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         User user = userService.findByUsername(userDetails.getUsername())
@@ -98,6 +111,54 @@ public class PlayerController {
         model.addAttribute("player", player);
         model.addAttribute("user", user);
         model.addAttribute("roles", userDetails.getAuthorities());
+
+
+        List<Statistic> statistics = new ArrayList<>();
+
+        if(actionType != null){
+            statistics = statisticService.findByPlayerIdAndActionType(player.getId(), actionType);
+        }else {
+            statistics = statisticService.findByPlayer(player);
+        }
+        List<Statistic> newStatistics = new ArrayList<>();
+        for (Statistic statistic : statistics) {
+
+            Statistic newStatistic = new Statistic();
+            newStatistic.setId(statistic.getId());
+            newStatistic.setActionType(statistic.getActionType());
+            newStatistic.setActionState(statistic.getActionState());
+            newStatistic.setStartX(statistic.getStartX());
+            newStatistic.setStartY(statistic.getStartY());
+            newStatistic.setEndX(statistic.getEndX());
+            newStatistic.setEndY(statistic.getEndY());
+            newStatistic.setColor(statistic.getColor());
+            newStatistic.setNotes(statistic.getNotes());
+
+            newStatistics.add(newStatistic);
+        }
+
+
+        model.addAttribute("statistics", statistics);
+
+        ObjectMapper mapper = new ObjectMapper();
+        // Register JavaTimeModule to handle Java 8 Date/Time types
+        mapper.registerModule(new JavaTimeModule());
+        // Optionally, disable writing dates as timestamps (e.g., 1626876870000)
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+
+        String statisticsJson = mapper.writeValueAsString(newStatistics);
+        model.addAttribute("statisticsJson", statisticsJson);
+
+        // Count statistics by type
+        long attackCount = statistics.stream().filter(s -> s.getActionType() == Statistic.ActionType.ATTACK).count();
+        long receptionCount = statistics.stream().filter(s -> s.getActionType() == Statistic.ActionType.RECEPTION).count();
+        long serveCount = statistics.stream().filter(s -> s.getActionType() == Statistic.ActionType.SERVE).count();
+
+        model.addAttribute("attackCount", attackCount);
+        model.addAttribute("receptionCount", receptionCount);
+        model.addAttribute("serveCount", serveCount);
+
 
         return "players/view";
     }
