@@ -315,12 +315,6 @@
                                                   th:classappend="'action-type-badge-' + ${stat.actionType.name()}"
                                                   th:text="${stat.actionType.name()}">ATTACK</span>
                                 </td>
-                                <!--                <td>-->
-                                <!--                  <div class="quality-bar">-->
-                                <!--                    <div class="quality-value" th:style="'width:' + ${ (stat.quality != null ? stat.quality : 0) * 20} + '%'"></div>-->
-                                <!--                  </div>-->
-                                <!--                  <small th:text="${stat.quality != null ? stat.quality : 0 + '/5'}">3/5</small>-->
-                                <!--                </td>-->
                                 <td th:text="${stat.actionState }"></td>
                                 <td th:text="${stat.player.name }">John Doe</td>
                                 <td th:text="${stat.team.name}">Team A</td>
@@ -409,45 +403,6 @@
         function normalize(value, max = 100) {
             return +(value / max).toFixed(3);
         }
-
-        console.log(statistics);
-
-
-        // If we couldn't get real data, use the sample data
-        // if (statistics.length === 0) {
-        //   statistics = sampleStatistics;
-        // }
-
-        // if (document.querySelectorAll('.statistic-table tbody tr').length > 0) {
-        //   document.querySelectorAll('.statistic-table tbody tr').forEach(row => {
-        //     const cells = row.querySelectorAll('td');
-        //     if (cells.length >= 7) {
-        //       const actionType = cells[1].querySelector('.badge')?.textContent || '';
-        //
-        //       // In a real application, you would get these from data attributes
-        //       // stored in the HTML or via Ajax
-        //       const startX = Math.random(); // This is just for the demo
-        //       const startY = Math.random(); // This is just for the demo
-        //       let endX = null, endY = null;
-        //
-        //       if (actionType === 'ATTACK') {
-        //         endX = Math.random();
-        //         endY = Math.random();
-        //       }
-        //
-        //       statistics.push({
-        //         id: cells[0].textContent,
-        //         actionType: actionType,
-        //         startX: startX,
-        //         startY: startY,
-        //         endX: endX,
-        //         endY: endY,
-        //         quality: parseInt(cells[4].querySelector('small')?.textContent) || 3
-        //       });
-        //     }
-        //   });
-        // }
-
 
         // Add markers and trajectories for each statistic
         statistics.forEach(stat => {
