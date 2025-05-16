@@ -587,6 +587,33 @@
                         </div>
                     </div>
 
+
+                    <!-- Team and Player Selection -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <div class="action-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            Player Information
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="teamId" class="form-label">Team:</label>
+                                <select class="form-select" id="teamId" name="teamId" required>
+                                    <option value="">Select Team</option>
+                                    <option th:each="team : ${teams}" th:value="${team.id}" th:text="${team.name}"></option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="playerId" class="form-label">Player:</label>
+                                <select class="form-select" id="playerId" name="playerId" required disabled>
+                                    <option value="">Select Player</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+
                     <!-- Action Type Selection -->
                     <div class="form-section">
                         <div class="section-title">
@@ -649,31 +676,6 @@
                             </div>
                         </div>
 
-                    </div>
-
-                    <!-- Team and Player Selection -->
-                    <div class="form-section">
-                        <div class="section-title">
-                            <div class="action-icon">
-                                <i class="fas fa-users"></i>
-                            </div>
-                            Player Information
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="teamId" class="form-label">Team:</label>
-                                <select class="form-select" id="teamId" name="teamId" required>
-                                    <option value="">Select Team</option>
-                                    <option th:each="team : ${teams}" th:value="${team.id}" th:text="${team.name}"></option>
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="playerId" class="form-label">Player:</label>
-                                <select class="form-select" id="playerId" name="playerId" required disabled>
-                                    <option value="">Select Player</option>
-                                </select>
-                            </div>
-                        </div>
                     </div>
 
                     <!-- Color Selection and Notes -->
@@ -835,7 +837,7 @@
                 lineElement.style.backgroundColor = color;
             });
 
-            // Action type selection
+
             // State container elements
             const attackStates = document.getElementById('attackStates');
             const receptionStates = document.getElementById('receptionStates');
