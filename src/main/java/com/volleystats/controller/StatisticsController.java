@@ -420,14 +420,21 @@ public class StatisticsController {
 
 
     @ResponseBody
-    @GetMapping("/chart/{field}/{playerId}/{actionType}")
+    @GetMapping("/chart/{field}/{id}/{actionType}")
     public ResponseEntity<ActionChartDTO> getChartData(
-            @PathVariable Long playerId,
+            @PathVariable Long id,
             @PathVariable String actionType,
             @PathVariable String field) {
         Statistic.ActionType type = Statistic.ActionType.valueOf(actionType.toUpperCase());
 
-        List<Statistic> statistics = statisticService.findByPlayerIdAndActionType(playerId, type);
+        List<Statistic> statistics = new ArrayList<>();
+
+        if(field.equalsIgnoreCase("PLAYER")){
+            statistics = statisticService.findByPlayerIdAndActionType(id, type);
+        }else if (field.equalsIgnoreCase("MATCH")){
+            statistics = statisticService.findByMatchIdAndActionType(id, type);
+        }
+        
 
         // Determine valid ActionStates for the ActionType
         List<Statistic.ActionState> validStates = getStatesForActionType(type);
