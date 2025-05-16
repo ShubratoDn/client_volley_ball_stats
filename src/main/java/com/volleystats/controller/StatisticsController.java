@@ -170,8 +170,6 @@ public class StatisticsController {
     public String createStatistic(@Valid @ModelAttribute("statistic") Statistic statisticPayload,
                                   BindingResult bindingResult,
                                   @RequestParam("matchId") Long matchId,
-                                  @RequestParam("teamId") Long teamId,
-                                  @RequestParam("playerId") Long playerId,
                                   RedirectAttributes redirectAttributes,
                                   Model model) {
 
@@ -214,6 +212,9 @@ public class StatisticsController {
 
                 String color = statisticSelection.getColor();
 
+                Long teamId = statisticSelection.getTeamId();
+                Long playerId = statisticSelection.getPlayerId();
+
                 // Set user and timestamps
                 statistic.setCreatedBy(user);
                 statistic.setCreatedAt(LocalDateTime.now());
@@ -226,6 +227,8 @@ public class StatisticsController {
                 // Set coordinates
                 statistic.setStartX(startX);
                 statistic.setStartY(startY);
+
+
 
                 // For attacks, we need end coordinates
                 if (actionType == ActionType.ATTACK) {
