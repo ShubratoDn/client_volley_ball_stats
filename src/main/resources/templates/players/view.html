@@ -306,8 +306,8 @@
                     <div class="row mb-4">
                         <div class="col-md-4">
                             <div class="card stat-card stat-card-attack"
-                                 th:onclick="'showChartForActionType(' + ${player.id} + ', \'ATTACK\')'">
-                                <div class="card-body text-center">
+                                 th:onclick="'showChartForActionType(&quot;PLAYER&quot;, ' + ${player.id} + ', &quot;ATTACK&quot;)'">
+                            <div class="card-body text-center">
                                     <h1 class="display-4" th:text="${attackCount}">5</h1>
                                     <h5>Attacks</h5>
                                 </div>
@@ -316,8 +316,9 @@
 
                         <div class="col-md-4">
                             <div class="card stat-card stat-card-reception"
-                                 th:onclick="'showChartForActionType(' + ${player.id} + ', \'RECEPTION\')'">
-                                <div class="card-body text-center">
+                                 th:onclick="'showChartForActionType(&quot;PLAYER&quot;, ' + ${player.id} + ', &quot;RECEPTION&quot;)'">
+
+                            <div class="card-body text-center">
                                     <h1 class="display-4" th:text="${receptionCount}">22</h1>
                                     <h5>Receptions</h5>
                                 </div>
@@ -326,8 +327,9 @@
                         <div class="col-md-4">
                             <!-- Serve -->
                             <div class="card stat-card stat-card-serve"
-                                 th:onclick="'showChartForActionType(' + ${player.id} + ', \'SERVE\')'">
-                                <div class="card-body text-center">
+                                 th:onclick="'showChartForActionType(&quot;PLAYER&quot;, ' + ${player.id} + ', &quot;SERVE&quot;)'">
+
+                            <div class="card-body text-center">
                                     <h1 class="display-4" th:text="${serveCount}">18</h1>
                                     <h5>Serves</h5>
                                 </div>
@@ -551,9 +553,9 @@
 <script>
     let barChart;
 
-    function showChartForActionType(playerId, actionType) {
+    function showChartForActionType(field, playerId, actionType) {
         $.ajax({
-            url: `/statistics/chart/${playerId}/${actionType}`,
+            url: `/statistics/chart/${field}/${playerId}/${actionType}`,
             method: 'GET',
             success: function (data) {
                 const ctx = document.getElementById('barChartCanvas').getContext('2d');

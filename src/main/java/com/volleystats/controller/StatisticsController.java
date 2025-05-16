@@ -420,11 +420,11 @@ public class StatisticsController {
 
 
     @ResponseBody
-    @GetMapping("/chart/{playerId}/{actionType}")
+    @GetMapping("/chart/{field}/{playerId}/{actionType}")
     public ResponseEntity<ActionChartDTO> getChartData(
             @PathVariable Long playerId,
-            @PathVariable String actionType
-    ) {
+            @PathVariable String actionType,
+            @PathVariable String field) {
         Statistic.ActionType type = Statistic.ActionType.valueOf(actionType.toUpperCase());
 
         List<Statistic> statistics = statisticService.findByPlayerIdAndActionType(playerId, type);
