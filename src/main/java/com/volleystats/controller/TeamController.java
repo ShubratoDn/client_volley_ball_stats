@@ -229,7 +229,12 @@ public class TeamController {
             return "redirect:/error/403";
         }
 
-        teamService.deleteTeam(id);
+        try{
+            teamService.deleteTeam(id);
+        }catch(Exception e){
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to delete team. One or more Player, Match, Tournament are associated with this team.");
+            return "redirect:/teams/"+id;
+        }
 
         redirectAttributes.addFlashAttribute("successMessage", "Team deleted successfully!");
         return "redirect:/teams";
