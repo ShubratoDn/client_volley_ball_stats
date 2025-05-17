@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -82,7 +83,22 @@ public class TeamController {
         User user = userService.findByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        if (playerIds == null || playerIds.isEmpty()) {
+            bindingResult.rejectValue("players", "team.players.empty", "At least one player must be selected.");
+        }
+
         if (bindingResult.hasErrors()) {
+            if (playerIds != null && !playerIds.isEmpty()) {
+                List<Player> selectedPlayers = new ArrayList<>();
+                for(Long playerId : playerIds){
+                    Player player = playerService.findById(playerId).orElse(null);
+                    if(player != null){
+                        player.setTeams(null);
+                        selectedPlayers.add(player);
+                    }
+                }
+                team.setPlayers(selectedPlayers);
+            }
             model.addAttribute("players", playerService.findByUser(user));
             model.addAttribute("user", user);
             model.addAttribute("roles", userDetails.getAuthorities());
@@ -172,7 +188,22 @@ public class TeamController {
             return "redirect:/error/403";
         }
 
+        if (playerIds == null || playerIds.isEmpty()) {
+            bindingResult.rejectValue("players", "team.players.empty", "At least one player must be selected.");
+        }
+
         if (bindingResult.hasErrors()) {
+            if (playerIds != null && !playerIds.isEmpty()) {
+                List<Player> selectedPlayers = new ArrayList<>();
+                for(Long playerId : playerIds){
+                    Player player = playerService.findById(playerId).orElse(null);
+                    if(player != null){
+                        player.setTeams(null);
+                        selectedPlayers.add(player);
+                    }
+                }
+                teamUpdates.setPlayers(selectedPlayers);
+            }
             model.addAttribute("players", playerService.findByUser(user));
             model.addAttribute("user", user);
             model.addAttribute("roles", userDetails.getAuthorities());
