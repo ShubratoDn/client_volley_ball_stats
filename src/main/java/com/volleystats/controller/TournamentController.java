@@ -146,6 +146,11 @@ public class TournamentController {
         }
 
         if (bindingResult.hasErrors()) {
+            tournamentUpdates.setCreatedBy(existingTournament.getCreatedBy());
+            tournamentUpdates.setCreatedAt(existingTournament.getCreatedAt());
+            tournamentUpdates.setUpdatedAt(existingTournament.getUpdatedAt());
+
+            model.addAttribute("tournament", tournamentUpdates);
             model.addAttribute("user", user);
             model.addAttribute("roles", userDetails.getAuthorities());
             return "tournaments/edit";

@@ -2,6 +2,7 @@ package com.volleystats.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -26,18 +27,22 @@ public class Tournament {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
-    @Size(max = 100)
+    @NotBlank(message = "Tournament name is required.")
+    @Size(max = 100, message = "Tournament name must not exceed 100 characters.")
     private String name;
 
+    @NotNull(message = "Start date is required.")
     private LocalDate startDate;
 
+    @NotNull(message = "End date is required.")
     private LocalDate endDate;
 
-    @Size(max = 200)
+    @NotBlank(message = "Location is required.")
+    @Size(max = 1000, message = "Location must not exceed 1000 characters.")
     private String location;
 
-    @Size(max = 1000)
+//    @NotBlank(message = "Description is required.")
+    @Size(max = 1000, message = "Description must not exceed 1000 characters.")
     private String description;
 
     @ManyToOne(fetch = FetchType.LAZY)

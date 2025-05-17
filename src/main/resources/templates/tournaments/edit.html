@@ -110,46 +110,62 @@
           <form th:action="@{/tournaments/{id}/edit(id=${tournament.id})}" th:object="${tournament}" method="post">
             <input type="hidden" th:field="*{id}">
 
+            <!-- Tournament Name -->
             <div class="mb-3">
               <label for="name" class="form-label">Tournament Name *</label>
-              <input type="text" class="form-control" id="name" th:field="*{name}" required>
+              <input type="text" class="form-control" id="name" th:field="*{name}" >
               <div class="text-danger" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
             </div>
 
+            <!-- Dates -->
             <div class="row mb-3">
               <div class="col-md-6">
                 <label for="startDate" class="form-label">Start Date *</label>
-                <input type="date" class="form-control" id="startDate" th:field="*{startDate}" required>
+                <input type="date" class="form-control" id="startDate"
+                       th:name="startDate"
+                       th:value="${tournament.startDate != null} ? ${#temporals.format(tournament.startDate, 'yyyy-MM-dd')} : ''">
                 <div class="text-danger" th:if="${#fields.hasErrors('startDate')}" th:errors="*{startDate}"></div>
               </div>
               <div class="col-md-6">
                 <label for="endDate" class="form-label">End Date *</label>
-                <input type="date" class="form-control" id="endDate" th:field="*{endDate}" required>
+
+                <input type="date" class="form-control" id="endDate"
+                       th:name="endDate"
+                       th:value="${tournament.endDate != null} ? ${#temporals.format(tournament.endDate, 'yyyy-MM-dd')} : ''">
                 <div class="text-danger" th:if="${#fields.hasErrors('endDate')}" th:errors="*{endDate}"></div>
               </div>
             </div>
 
+            <!-- Location -->
             <div class="mb-3">
               <label for="location" class="form-label">Location *</label>
-              <input type="text" class="form-control" id="location" th:field="*{location}" required>
+              <input type="text" class="form-control" id="location" th:field="*{location}" >
               <div class="text-danger" th:if="${#fields.hasErrors('location')}" th:errors="*{location}"></div>
             </div>
 
+            <!-- Description -->
             <div class="mb-3">
               <label for="description" class="form-label">Description</label>
               <textarea class="form-control" id="description" th:field="*{description}" rows="4"></textarea>
               <div class="text-danger" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></div>
             </div>
 
-            <!-- Additional Information -->
+            <!-- Audit Info -->
             <div class="card mb-3 bg-light">
               <div class="card-body">
-                <p class="mb-1"><small><strong>Created by:</strong> <span th:text="${tournament.createdBy.username}">username</span></small></p>
-                <p class="mb-1"><small><strong>Created at:</strong> <span th:text="${#temporals.format(tournament.createdAt, 'dd MMM yyyy HH:mm')}">01 Jan 2023</span></small></p>
-                <p class="mb-0"><small><strong>Last updated:</strong> <span th:text="${#temporals.format(tournament.updatedAt, 'dd MMM yyyy HH:mm')}">01 Jan 2023</span></small></p>
+                <p class="mb-1">
+                  <small><strong>Created by:</strong> <span th:text="${tournament.createdBy.username}">username</span></small>
+                </p>
+                <p class="mb-1">
+                  <small><strong>Created at:</strong> <span th:text="${#temporals.format(tournament.createdAt, 'dd MMM yyyy HH:mm')}">01 Jan 2023</span></small>
+                </p>
+                <p class="mb-0">
+                  <small><strong>Last updated:</strong> <span th:text="${#temporals.format(tournament.updatedAt, 'dd MMM yyyy HH:mm')}">01 Jan 2023</span></small>
+                </p>
               </div>
             </div>
 
+            <!-- Buttons -->
             <div class="d-flex justify-content-end">
               <a th:href="@{/tournaments/{id}(id=${tournament.id})}" class="btn btn-secondary me-2">Cancel</a>
               <button type="submit" class="btn btn-primary">
@@ -157,6 +173,7 @@
               </button>
             </div>
           </form>
+
         </div>
       </div>
     </div>
