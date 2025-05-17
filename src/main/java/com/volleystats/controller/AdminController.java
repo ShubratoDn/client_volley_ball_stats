@@ -45,11 +45,8 @@ public class AdminController {
     public String updateUser(@PathVariable Long id, @Valid @ModelAttribute("user") User user,
                              BindingResult bindingResult,
                              @RequestParam(value = "roles", required = false) Set<String> roles,
-                             RedirectAttributes redirectAttributes) {
+                             RedirectAttributes redirectAttributes, Model model) {
 
-        if (bindingResult.hasErrors()) {
-            return "admin/edit-user";
-        }
 
         User existingUser = userService.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
@@ -58,13 +55,17 @@ public class AdminController {
         if (!existingUser.getUsername().equals(user.getUsername()) &&
                 userService.existsByUsername(user.getUsername())) {
             bindingResult.rejectValue("username", "error.username", "Username already taken");
-            return "admin/edit-user";
         }
 
         // Check for email uniqueness
-        if (!existingUser.getEmail().equals(user.getEmail()) &&
-                userService.existsByEmail(user.getEmail())) {
+        if (!existingUser.getEmail().equals(user.getEmail()) &&userService.existsByEmail(user.getEmail())) {
             bindingResult.rejectValue("email", "error.email", "Email already in use");
+        }
+
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("user", user);
+            model.addAttribute("roles", roles);
+            model.addAttribute("allRoles", Role.ERole.values());
             return "admin/edit-user";
         }
 

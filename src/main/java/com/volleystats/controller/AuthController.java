@@ -51,7 +51,6 @@ public class AuthController {
     @PostMapping("/register")
     public String registerUser(@Valid @ModelAttribute("user") User user,
                                BindingResult bindingResult,
-                               @RequestParam(value = "role", required = false) String role,
                                RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
@@ -71,9 +70,6 @@ public class AuthController {
         // Create new user's account
         try {
             Set<String> roles = new HashSet<>();
-            if (role != null && !role.isEmpty()) {
-                roles.add(role);
-            }
 
             userService.registerUser(
                     user.getUsername(),

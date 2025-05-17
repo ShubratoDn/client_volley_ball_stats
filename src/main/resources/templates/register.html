@@ -104,14 +104,6 @@
                             <input type="password" class="form-control" id="password" th:field="*{password}" required>
                             <div class="text-danger" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
                         </div>
-                        <div class="mb-3">
-                            <label for="role" class="form-label">Role (Optional)</label>
-                            <select class="form-control" id="role" name="role">
-                                <option value="">User (Default)</option>
-                                <option value="admin">Admin</option>
-                                <option value="mod">Moderator</option>
-                            </select>
-                        </div>
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary btn-lg">Register</button>
                         </div>

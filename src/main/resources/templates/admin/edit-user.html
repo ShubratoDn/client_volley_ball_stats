@@ -61,11 +61,14 @@
                                th:id="${'role_' + role.name()}"
                                th:value="${role.name().substring(5).toLowerCase()}"
                                name="roles"
-                               th:checked="${user.roles.![name].contains(role)}"/>
+                               th:checked="${user.roles.?[name == role].size() > 0}"/>
                         <label class="form-check-label" th:for="${'role_' + role.name()}">
                             [[${role.name().substring(5)}]]
                         </label>
                     </div>
+                </div>
+                <div th:if="${#fields.hasErrors('roles')}" class="text-danger">
+                    <span th:errors="*{roles}"></span>
                 </div>
             </div>
 
