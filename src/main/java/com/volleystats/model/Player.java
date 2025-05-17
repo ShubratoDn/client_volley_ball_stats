@@ -2,6 +2,7 @@ package com.volleystats.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,34 +26,40 @@ public class Player {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Name is required")
-    @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
+    @NotBlank(message = "Name is required.")
+    @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters.")
     private String name;
 
+    @NotNull(message = "Birth date is required.")
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
+    @NotNull(message = "Height is required.")
     @Column(name = "height")
     private Integer height;  // in cm
 
+    @NotNull(message = "Weight is required.")
     @Column(name = "weight")
     private Integer weight;  // in kg
 
+    @NotBlank(message = "Position is required.")
+    @Size(max = 50, message = "Position cannot exceed 50 characters.")
     @Column(name = "position")
-    @Size(max = 50)
     private String position;
 
+    @Size(max = 50, message = "Nationality cannot exceed 50 characters.")
     @Column(name = "nationality")
-    @Size(max = 50)
     private String nationality;
 
     @Column(name = "jersey_number")
     private Integer jerseyNumber;
 
-    @Column(name = "profile_image")
+    @Size(max = 1500, message = "Image URL must be 1500 characters or fewer.")
+    @Column(name = "profile_image", length = 1500)
     private String profileImage;
 
-    @Column(name = "notes", columnDefinition = "TEXT")
+    @Size(max = 1500, message = "Notes must be 1500 characters or fewer.")
+    @Column(name = "notes", columnDefinition = "TEXT", length = 1500)
     private String notes;
 
     @ManyToMany(mappedBy = "players")

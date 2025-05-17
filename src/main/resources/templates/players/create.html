@@ -100,12 +100,17 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="name" class="form-label">Player Name *</label>
-                                <input type="text" class="form-control" id="name" th:field="*{name}" required>
+                                <input type="text" class="form-control" id="name" th:field="*{name}">
                                 <div class="text-danger" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
                             </div>
                             <div class="col-md-6">
-                                <label for="dateOfBirth" class="form-label">Date of Birth</label>
-                                <input type="date" class="form-control" id="dateOfBirth" th:field="*{dateOfBirth}">
+                                <label for="dateOfBirth" class="form-label">Date of Birth *</label>
+                                <input type="date" class="form-control"
+                                       id="dateOfBirth"
+                                       name="dateOfBirth"
+                                       th:value="${player.dateOfBirth != null} ? ${#temporals.format(player.dateOfBirth, 'yyyy-MM-dd')} : ''">
+                                <div class="text-danger" th:if="${#fields.hasErrors('dateOfBirth')}"
+                                     th:errors="*{dateOfBirth}"></div>
                             </div>
                         </div>
 
@@ -113,9 +118,10 @@
                             <div class="col-md-6">
                                 <label for="nationality" class="form-label">Nationality</label>
                                 <input type="text" class="form-control" id="nationality" th:field="*{nationality}">
+                                <div class="text-danger" th:if="${#fields.hasErrors('nationality')}" th:errors="*{nationality}"></div>
                             </div>
                             <div class="col-md-6">
-                                <label for="position" class="form-label">Position</label>
+                                <label for="position" class="form-label">Position *</label>
                                 <select class="form-select" id="position" th:field="*{position}">
                                     <option value="">Select Position</option>
                                     <option value="Blocker">Blocker</option>
@@ -123,35 +129,39 @@
                                     <option value="Setter">Setter</option>
                                     <option value="Universal">Universal</option>
                                 </select>
+                                <div class="text-danger" th:if="${#fields.hasErrors('position')}" th:errors="*{position}"></div>
                             </div>
                         </div>
 
                         <div class="row mb-3">
                             <div class="col-md-4">
-                                <label for="height" class="form-label">Height (cm)</label>
+                                <label for="height" class="form-label">Height (cm) *</label>
                                 <input type="number" class="form-control" id="height" th:field="*{height}">
+                                <div class="text-danger" th:if="${#fields.hasErrors('height')}" th:errors="*{height}"></div>
                             </div>
                             <div class="col-md-4">
-                                <label for="weight" class="form-label">Weight (kg)</label>
+                                <label for="weight" class="form-label">Weight (kg) *</label>
                                 <input type="number" class="form-control" id="weight" th:field="*{weight}">
+                                <div class="text-danger" th:if="${#fields.hasErrors('weight')}" th:errors="*{weight}"></div>
                             </div>
                             <div class="col-md-4">
                                 <label for="jerseyNumber" class="form-label">Jersey Number</label>
                                 <input type="number" class="form-control" id="jerseyNumber" th:field="*{jerseyNumber}">
+                                <div class="text-danger" th:if="${#fields.hasErrors('jerseyNumber')}" th:errors="*{jerseyNumber}"></div>
                             </div>
                         </div>
 
                         <div class="mb-3">
                             <label for="profileImage" class="form-label">Profile Image URL</label>
-                            <input type="text" class="form-control" id="profileImage" th:field="*{profileImage}"
-                                   placeholder="https://example.com/image.jpg">
+                            <input type="text" class="form-control" id="profileImage" th:field="*{profileImage}" placeholder="https://example.com/image.jpg">
                             <div class="form-text">Enter the URL of the player's profile image</div>
+                            <div class="text-danger" th:if="${#fields.hasErrors('profileImage')}" th:errors="*{profileImage}"></div>
                         </div>
 
                         <div class="mb-3">
                             <label for="notes" class="form-label">Notes</label>
-                            <textarea class="form-control" id="notes" rows="4" th:field="*{notes}"
-                                      placeholder="Additional player information..."></textarea>
+                            <textarea class="form-control" id="notes" rows="4" th:field="*{notes}" placeholder="Additional player information..."></textarea>
+                            <div class="text-danger" th:if="${#fields.hasErrors('notes')}" th:errors="*{notes}"></div>
                         </div>
 
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -161,6 +171,7 @@
                             </button>
                         </div>
                     </form>
+
                 </div>
             </div>
         </div>
