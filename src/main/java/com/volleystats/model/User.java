@@ -28,15 +28,15 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
+    @NotBlank(message = "Username is required")
     @Size(max = 50)
     private String username;
 
-    @NotBlank
+    @NotBlank(message = "Password is required.")
     @Size(max = 120)
     private String password;
 
-    @NotBlank
+    @NotBlank(message = "Email is required.")
     @Size(max = 100)
     @Email
     private String email;

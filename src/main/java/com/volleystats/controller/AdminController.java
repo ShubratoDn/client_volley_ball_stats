@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
+
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -63,9 +65,20 @@ public class AdminController {
         }
 
         if (bindingResult.hasErrors()) {
+            // Update roles
+            if (roles != null) {
+                Set<Role> newRoles = roles.stream()
+                        .map(role -> Role.ERole.valueOf("ROLE_" + role.toUpperCase()))
+                        .map(erole -> userService.getOrCreateRole(erole))
+                        .collect(Collectors.toSet());
+                user.setRoles(newRoles);
+            }
+
             model.addAttribute("user", user);
-            model.addAttribute("roles", roles);
             model.addAttribute("allRoles", Role.ERole.values());
+
+            System.out.println(bindingResult.getAllErrors());
+
             return "admin/edit-user";
         }
 
