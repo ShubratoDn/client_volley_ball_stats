@@ -10,6 +10,14 @@
     <link rel="stylesheet" th:href="@{/css/styles.css}">
     <!-- Flatpickr for date/time picker -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+    <style>
+
+        /* Multi-select */
+        .invalid + .select2-container--default .select2-selection--multiple {
+            border: 1px solid #dc3545 !important;
+        }
+    </style>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
@@ -156,69 +164,22 @@
                             <div class="card">
                                 <div class="card-body">
                                     <!-- Changed to make sure the name is consistent with what the controller expects -->
-                                    <select class="form-select team-select" id="teamsSelect" name="teamIds" multiple>
+                                    <select class="form-select team-select form-control" id="teamsSelect" name="teamIds" multiple required>
                                         <option th:each="team : ${teams}"
                                                 th:value="${team.id}"
                                                 th:text="${team.name}">
                                             Team Name
                                         </option>
                                     </select>
+                                    <div id="teamErrorMsg" style="display:  none">
+                                        <small class="text-danger">Please select 2 teams</small>
+                                    </div>
                                     <div class="text-muted mt-2">
                                         <small><i class="fas fa-info-circle"></i> Select up to 2 teams. Teams can be updated after match creation.</small>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Update the JavaScript section at the bottom of your page -->
-                        <script>
-                            $(document).ready(function() {
-                                // Initialize Select2 for better dropdown experience
-                                $('#teamsSelect').select2({
-                                    placeholder: "Select teams (max 2)",
-                                    allowClear: true,
-                                    maximumSelectionLength: 2
-                                });
-
-                                // Initialize flatpickr for date/time picker
-                                // Ensure the format matches the @DateTimeFormat annotation in your Match entity
-                                flatpickr("#matchDate", {
-                                    enableTime: true,
-                                    dateFormat: "Y-m-d H:i",  // This must match the @DateTimeFormat pattern
-                                    time_24hr: true,
-                                    defaultDate: new Date() // Setting default to current date/time
-                                });
-                            });
-
-                            // Form validation
-                            (function() {
-                                'use strict';
-
-                                // Fetch all the forms we want to apply custom Bootstrap validation styles to
-                                var forms = document.querySelectorAll('.needs-validation');
-
-                                // Loop over them and prevent submission
-                                Array.from(forms).forEach(function(form) {
-                                    form.addEventListener('submit', function(event) {
-                                        // Check if more than 2 teams are selected
-                                        let selectedTeams = $('#teamsSelect').val();
-                                        if (selectedTeams && selectedTeams.length > 2) {
-                                            alert('You can select a maximum of 2 teams.');
-                                            event.preventDefault();
-                                            event.stopPropagation();
-                                            return;
-                                        }
-
-                                        if (!form.checkValidity()) {
-                                            event.preventDefault();
-                                            event.stopPropagation();
-                                        }
-
-                                        form.classList.add('was-validated');
-                                    }, false);
-                                });
-                            })();
-                        </script>
 
                         <!-- Notes -->
                         <div class="mb-3">
@@ -258,11 +219,12 @@
         });
 
         // Initialize flatpickr for date/time picker
-        flatpickr("#matchDate", {
-            enableTime: true,
-            dateFormat: "Y-m-d H:i",
-            time_24hr: true
-        });
+        // flatpickr("#matchDate", {
+        //     enableTime: true,
+        //     dateFormat: "Y-m-d H:i",
+        //     time_24hr: true
+        // });
+
     });
 
     // Form validation
@@ -272,17 +234,37 @@
         // Fetch all the forms we want to apply custom Bootstrap validation styles to
         var forms = document.querySelectorAll('.needs-validation');
 
-        // Loop over them and prevent submission
         Array.from(forms).forEach(function(form) {
             form.addEventListener('submit', function(event) {
                 // Check if more than 2 teams are selected
+                let teamErrorMsg = $('#teamErrorMsg');
                 let selectedTeams = $('#teamsSelect').val();
-                if (selectedTeams && selectedTeams.length > 2) {
-                    alert('You can select a maximum of 2 teams.');
+
+
+                teamErrorMsg.hide();
+                $('#teamsSelect').removeClass('invalid');
+                if (selectedTeams == null || (selectedTeams && selectedTeams.length !== 2)) {
+                    teamErrorMsg.show();
+                    $('#teamsSelect').addClass('invalid');
                     event.preventDefault();
                     event.stopPropagation();
-                    return;
+                    // return;
                 }
+
+                // Check if more than 2 teams are selected
+                // let selectedTeamsEle = $('#teamsSelect');
+                // let teamErrorMsg = $('#teamErrorMsg');
+                // let selectedTeams = selectedTeamsEle.val();
+                //
+                // teamErrorMsg.style.display="none";
+                //
+                // if (selectedTeams == null || (selectedTeams && selectedTeams.length !== 2)) {
+                //     teamErrorMsg.style.display="block";
+                //     event.preventDefault();
+                //     event.stopPropagation();
+                //     return;
+                // }
+
 
                 if (!form.checkValidity()) {
                     event.preventDefault();
