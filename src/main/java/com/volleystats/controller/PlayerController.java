@@ -4,13 +4,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.volleystats.model.Match;
-import com.volleystats.model.Player;
-import com.volleystats.model.Statistic;
-import com.volleystats.model.User;
+import com.volleystats.model.*;
 import com.volleystats.service.PlayerService;
 import com.volleystats.service.StatisticService;
+import com.volleystats.service.TeamService;
 import com.volleystats.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +23,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.net.http.HttpRequest;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +42,9 @@ public class PlayerController {
 
     @Autowired
     private StatisticService statisticService;
+
+    @Autowired
+    private TeamService teamService;
 
     @GetMapping
     public String listPlayers(Model model) {
@@ -231,7 +236,7 @@ public class PlayerController {
     }
 
     @PostMapping("/{id}/delete")
-    public String deletePlayer(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
+    public String deletePlayer(@PathVariable("id") Long id, RedirectAttributes redirectAttributes, HttpServletRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         User user = userService.findByUsername(userDetails.getUsername())
@@ -246,7 +251,52 @@ public class PlayerController {
             return "redirect:/error/403";
         }
 
-        playerService.deletePlayer(id);
+        redirectAttributes.addFlashAttribute("requestToDelete", "A_DEMO_TEXT");
+
+        try{
+            playerService.deletePlayer(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Player deleted successfully!");
+        }catch(Exception e){
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to delete player! Maybe the player is associated with Teams and Statistics. <a href='/players/force-delete?id="+id+"'>Click here</a> to remove the player with all data");
+            // In your deletePlayer method:
+            request.getSession().setAttribute("forceDeletePlayerId", id);
+        }
+
+        return "redirect:/players";
+    }
+
+    @GetMapping("/force-delete")
+    public String foreceDeletePlayer(@RequestParam(required = false) Long id, RedirectAttributes redirectAttributes, Model model, HttpServletRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        User user = userService.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Verify session token matches URL token
+        HttpSession session = request.getSession();
+        Long sessionPlayerId = (Long) session.getAttribute("forceDeletePlayerId");
+
+        if (id == null || !id.equals(sessionPlayerId)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Invalid force delete request");
+            return "redirect:/players";
+        }
+        // Clean up session
+        session.removeAttribute("forceDeletePlayerId");
+        Player player = playerService.findById(id)
+                .orElseThrow(() -> new RuntimeException("Player not found"));
+
+        // Check if the user is the creator of the player or an admin
+        if (!player.getCreatedBy().getId().equals(user.getId()) &&
+                !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            return "redirect:/error/403";
+        }
+
+        statisticService.deleteStatisticByPlayer(player);
+
+        List<Team> teamsByPlayer = teamService.findTeamsByPlayer(player.getId());
+        for(Team team : teamsByPlayer) {
+            teamService.removePlayerFromTeam(team.getId(), player.getId());
+        }
 
         redirectAttributes.addFlashAttribute("successMessage", "Player deleted successfully!");
         return "redirect:/players";

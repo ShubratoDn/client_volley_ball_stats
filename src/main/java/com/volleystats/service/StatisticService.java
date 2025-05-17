@@ -5,6 +5,7 @@ import com.volleystats.model.Player;
 import com.volleystats.model.Statistic;
 import com.volleystats.model.Team;
 import com.volleystats.repository.StatisticRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -104,5 +105,10 @@ public class StatisticService {
             default:
                 return "#000000"; // Black as fallback
         }
+    }
+
+    @Transactional
+    public void deleteStatisticByPlayer(Player player) {
+        statisticRepository.deleteByPlayer(player);
     }
 }

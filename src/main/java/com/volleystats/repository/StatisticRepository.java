@@ -29,4 +29,6 @@ public interface StatisticRepository extends JpaRepository<Statistic, Long> {
     List<Statistic> findByMatchIdAndActionType(Long matchId, Statistic.ActionType actionType);
 
     List<Statistic> findByPlayerIdAndActionType(Long playerId, Statistic.ActionType actionType);
+
+    void deleteByPlayer(Player player);
 }
