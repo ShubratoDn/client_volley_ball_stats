@@ -53,9 +53,6 @@ public class AuthController {
                                BindingResult bindingResult,
                                RedirectAttributes redirectAttributes) {
 
-        if (bindingResult.hasErrors()) {
-            return "register";
-        }
 
         if (userService.existsByUsername(user.getUsername())) {
             bindingResult.rejectValue("username", "error.username", "Username is already taken");
@@ -73,6 +70,10 @@ public class AuthController {
 
         if (user.getPassword() != null && !user.getPassword().trim().isEmpty() && user.getPassword().length() < 4) {
             bindingResult.rejectValue("password", "error.password", "Password must be at least 4 characters.");
+        }
+
+        if (bindingResult.hasErrors()) {
+            return "register";
         }
 
         // Create new user's account
