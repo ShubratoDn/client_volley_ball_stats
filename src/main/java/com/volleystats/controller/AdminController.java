@@ -13,6 +13,7 @@ import com.volleystats.service.StatisticService;
 import com.volleystats.service.TournamentService;
 import com.volleystats.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -145,15 +147,28 @@ public class AdminController {
 
 
     @PostMapping("/users/delete")
-    public String delete(@RequestParam(required = true) Long id, RedirectAttributes redirectAttributes, Model model, HttpServletRequest request) {
-
+    public String delete(@RequestParam(required = true) Long id, RedirectAttributes redirectAttributes, Model model, HttpServletRequest request, HttpServletResponse response) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User existingUser = userService.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
 
+        boolean currentUserRemoved = userService.getCurrentUser().getUsername().equals(existingUser.getUsername());
+
         try{
             userRepository.deleteById(id);
+
+            if(currentUserRemoved){
+                // Log out the current user
+                new SecurityContextLogoutHandler().logout(request, response, authentication);
+
+                // Redirect to login page with success message
+                redirectAttributes.addFlashAttribute("successMessage", "Player deleted successfully!");
+                return "redirect:/login";
+            }
+
             redirectAttributes.addFlashAttribute("successMessage", "User removed successfully");
         }catch(Exception e){
+            e.printStackTrace();
             redirectAttributes.addFlashAttribute("errorMessage", "User removed failed. Maybe the user is associated with other features. <a href='/admin/users/force-delete?id="+id+"'>Click here</a> to remove the user with all data");
             // In your deletePlayer method:
             request.getSession().setAttribute("forceDeleteUserId", id);
@@ -164,10 +179,10 @@ public class AdminController {
 
 
     @GetMapping("/users/force-delete")
-    public String foreceDeleteUser(@RequestParam(required = false) Long id, RedirectAttributes redirectAttributes, HttpServletRequest request) {
+    public String foreceDeleteUser(@RequestParam(required = false) Long id, RedirectAttributes redirectAttributes, HttpServletRequest request, HttpServletResponse response) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        User user = userService.findByUsername(userDetails.getUsername())
+        User loggedInUser = userService.findByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         // Verify session token matches URL token
@@ -179,9 +194,12 @@ public class AdminController {
             return "redirect:/admin";
         }
 
+        User user = userService.findById(sessionUserId).orElseThrow(() -> new RuntimeException("User not found"));
+
+        boolean currentUserRemoved = loggedInUser.getUsername().equals(user.getUsername());
+
         // Clean up session
         session.removeAttribute("forceDeleteUserId");
-
 
         statisticService.deleteStatisticByCreatedBy(user);
         matchService.deleteMatchByCreatedBy(user);
@@ -189,6 +207,16 @@ public class AdminController {
         teamRepository.deleteByCreatedBy(user);
         playerRepository.deleteByCreatedBy(user);
         userRepository.delete(user);
+
+
+        if(currentUserRemoved){
+            // Log out the current user
+            new SecurityContextLogoutHandler().logout(request, response, authentication);
+
+            // Redirect to login page with success message
+            redirectAttributes.addFlashAttribute("successMessage", "Player deleted successfully!");
+            return "redirect:/login";
+        }
 
         redirectAttributes.addFlashAttribute("successMessage", "Player deleted successfully!");
         return "redirect:/admin";
