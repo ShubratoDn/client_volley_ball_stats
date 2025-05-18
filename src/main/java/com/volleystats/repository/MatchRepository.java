@@ -37,4 +37,6 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
 
     @Query("SELECT m FROM Match m JOIN m.teams t JOIN t.players p WHERE p.id = :playerId")
     List<Match> findByPlayerId(@Param("playerId") Long playerId);
+
+    void deleteByCreatedBy(User user);
 }

@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -20,5 +21,8 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
     // Method to find players by team ID for many-to-many relationship
     @Query("SELECT p FROM Player p JOIN p.teams t WHERE t.id = :teamId")
     List<Player> findByTeamId(@Param("teamId") Long teamId);
+
+    @Transactional
+    void deleteByCreatedBy(User user);
 
 }

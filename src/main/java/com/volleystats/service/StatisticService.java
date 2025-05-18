@@ -1,9 +1,6 @@
 package com.volleystats.service;
 
-import com.volleystats.model.Match;
-import com.volleystats.model.Player;
-import com.volleystats.model.Statistic;
-import com.volleystats.model.Team;
+import com.volleystats.model.*;
 import com.volleystats.repository.StatisticRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -110,5 +107,10 @@ public class StatisticService {
     @Transactional
     public void deleteStatisticByPlayer(Player player) {
         statisticRepository.deleteByPlayer(player);
+    }
+
+    @Transactional
+    public void deleteStatisticByCreatedBy(User createByUser) {
+        statisticRepository.deleteByCreatedBy(createByUser);
     }
 }

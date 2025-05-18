@@ -77,6 +77,12 @@ public class MatchService {
     }
 
     @Transactional
+    public void deleteMatchByCreatedBy(User createByUser) {
+        matchRepository.deleteByCreatedBy(createByUser);
+    }
+
+
+    @Transactional
     public Match addTeamToMatch(Long matchId, Team team) {
         Match match = matchRepository.findById(matchId)
                 .orElseThrow(() -> new IllegalArgumentException("Match not found with id: " + matchId));

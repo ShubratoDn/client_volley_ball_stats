@@ -1,9 +1,6 @@
 package com.volleystats.repository;
 
-import com.volleystats.model.Match;
-import com.volleystats.model.Player;
-import com.volleystats.model.Statistic;
-import com.volleystats.model.Team;
+import com.volleystats.model.*;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -31,4 +28,6 @@ public interface StatisticRepository extends JpaRepository<Statistic, Long> {
     List<Statistic> findByPlayerIdAndActionType(Long playerId, Statistic.ActionType actionType);
 
     void deleteByPlayer(Player player);
+
+    void deleteByCreatedBy(User user);
 }

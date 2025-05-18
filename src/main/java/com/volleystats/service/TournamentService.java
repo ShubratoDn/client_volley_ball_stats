@@ -85,4 +85,9 @@ public class TournamentService {
         tournament.getTeams().removeIf(team -> team.getId().equals(teamId));
         return tournamentRepository.save(tournament);
     }
+
+    @Transactional
+    public void deleteByCreatedBy(User createdByUser) {
+        tournamentRepository.deleteByCreatedBy(createdByUser);
+    }
 }
