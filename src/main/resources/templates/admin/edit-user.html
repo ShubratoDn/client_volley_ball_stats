@@ -51,6 +51,14 @@
                 </div>
             </div>
 
+            <div class="mb-3">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-control" th:field="*{password}" placeholder="Enter password"/>
+                <div th:if="${#fields.hasErrors('password')}" class="text-danger">
+                    <span th:errors="*{password}"></span>
+                </div>
+            </div>
+
             <!-- Roles -->
             <div class="mb-4">
                 <label class="form-label">Roles</label>
@@ -60,12 +68,15 @@
                                type="checkbox"
                                th:id="${'role_' + role.name()}"
                                th:value="${role.name().substring(5).toLowerCase()}"
-                               name="roles"
+                               name="roleNames"
                                th:checked="${user.roles.![name].contains(role)}"/>
                         <label class="form-check-label" th:for="${'role_' + role.name()}">
                             [[${role.name().substring(5)}]]
                         </label>
                     </div>
+                </div>
+                <div th:if="${#fields.hasErrors('roles')}" class="text-danger">
+                    <span th:errors="*{roles}"></span>
                 </div>
             </div>
 

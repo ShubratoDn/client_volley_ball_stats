@@ -67,6 +67,14 @@ public class AuthController {
             return "register";
         }
 
+        if (user.getPassword() == null || user.getPassword().trim().isEmpty()) {
+            bindingResult.rejectValue("password", "error.password", "Password is required.");
+        }
+
+        if (user.getPassword() != null && !user.getPassword().trim().isEmpty() && user.getPassword().length() < 4) {
+            bindingResult.rejectValue("password", "error.password", "Password must be at least 4 characters.");
+        }
+
         // Create new user's account
         try {
             Set<String> roles = new HashSet<>();

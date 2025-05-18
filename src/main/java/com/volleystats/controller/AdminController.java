@@ -5,6 +5,7 @@ import com.volleystats.model.User;
 import com.volleystats.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -26,6 +27,9 @@ public class AdminController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @GetMapping
     public String adminDashboard(Model model) {
         List<User> users = userService.findAllUsers();
@@ -38,6 +42,8 @@ public class AdminController {
         User user = userService.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
 
+        user.setPassword(null);
+
         model.addAttribute("user", user);
         model.addAttribute("allRoles", Role.ERole.values());
         return "admin/edit-user";
@@ -46,7 +52,7 @@ public class AdminController {
     @PostMapping("/users/edit/{id}")
     public String updateUser(@PathVariable Long id, @Valid @ModelAttribute("user") User user,
                              BindingResult bindingResult,
-                             @RequestParam(value = "roles", required = false) Set<String> roles,
+                             @RequestParam(value = "roleNames", required = false) Set<String> roleNames,
                              RedirectAttributes redirectAttributes, Model model) {
 
 
@@ -64,10 +70,18 @@ public class AdminController {
             bindingResult.rejectValue("email", "error.email", "Email already in use");
         }
 
+        if (roleNames == null || roleNames.isEmpty()) {
+            bindingResult.rejectValue("roles", "error.roles", "Select one or more roles.");
+        }
+
+        if (user.getPassword() != null && !user.getPassword().trim().isEmpty() && user.getPassword().length() < 4) {
+            bindingResult.rejectValue("password", "error.password", "Password must be at least 4 characters.");
+        }
+
         if (bindingResult.hasErrors()) {
             // Update roles
-            if (roles != null) {
-                Set<Role> newRoles = roles.stream()
+            if (roleNames != null) {
+                Set<Role> newRoles = roleNames.stream()
                         .map(role -> Role.ERole.valueOf("ROLE_" + role.toUpperCase()))
                         .map(erole -> userService.getOrCreateRole(erole))
                         .collect(Collectors.toSet());
@@ -76,10 +90,11 @@ public class AdminController {
 
             model.addAttribute("user", user);
             model.addAttribute("allRoles", Role.ERole.values());
-
-            System.out.println(bindingResult.getAllErrors());
-
             return "admin/edit-user";
+        }
+
+        if (user.getPassword() != null && !user.getPassword().trim().isEmpty()) {
+            existingUser.setPassword((passwordEncoder.encode(user.getPassword())));
         }
 
         // Update user details
@@ -87,8 +102,8 @@ public class AdminController {
         existingUser.setEmail(user.getEmail());
 
         // Update roles
-        if (roles != null) {
-            Set<Role> newRoles = roles.stream()
+        if (roleNames != null) {
+            Set<Role> newRoles = roleNames.stream()
                     .map(role -> Role.ERole.valueOf("ROLE_" + role.toUpperCase()))
                     .map(erole -> userService.getOrCreateRole(erole))
                     .collect(Collectors.toSet());

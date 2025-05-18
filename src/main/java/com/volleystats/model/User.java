@@ -32,8 +32,8 @@ public class User {
     @Size(max = 50)
     private String username;
 
-    @NotBlank(message = "Password is required.")
-    @Size(max = 120)
+//    @NotBlank(message = "Password is required.")
+    @Size(max = 200)
     private String password;
 
     @NotBlank(message = "Email is required.")
